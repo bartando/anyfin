@@ -38,6 +38,7 @@ function App() {
   const [tab, setTab] = useState(0);
   const [detail, setDetail] = useState(null);
   const [toast, setToast] = useState(null);
+  const [homeY, setHomeY] = useState(0);
   const {focus} = useFocus();
   const started = useRef(false);
 
@@ -53,6 +54,11 @@ function App() {
   }, [toast]);
 
   const open = useCallback(item => setDetail(item), []);
+  // Focusing a tab selects it; on Home that also scrolls back so the focused tab is on screen.
+  const select = useCallback(index => {
+    setTab(index);
+    setHomeY(0);
+  }, []);
   const play = useCallback(item => setToast({id: Date.now(), text: `Playback isn't wired up in this demo: ${item.title}`}), []);
   const onAction = action => {
     if (action !== 'l1' && action !== 'r1') return false;
@@ -69,12 +75,12 @@ function App() {
             <motion.View key={tab} className="absolute inset-0"
               variants={screen} initial="hidden" animate="shown" exit="gone">
               <FocusScope focusKey="content" onBack={() => focus('tabs')}>
-                {TABS[tab].render({onOpen: open, onPlay: play})}
+                {TABS[tab].render({onOpen: open, onPlay: play, scrollY: homeY, onScrollY: setHomeY})}
               </FocusScope>
             </motion.View>
           </AnimatePresence>
-          <TopBar labels={LABELS} active={tab} onSelect={setTab} onEnter={() => focus('content')}
-            downTo={DOWN_TO} />
+          <TopBar labels={LABELS} active={tab} onSelect={select} onEnter={() => focus('content')}
+            downTo={DOWN_TO} y={tab === 0 ? homeY : 0} />
         </View>
       </FocusScope>
       <AnimatePresence>

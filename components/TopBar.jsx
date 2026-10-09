@@ -25,11 +25,12 @@ function Clock() {
 
 /**
  * Wordmark, the centred tab pill and the clock/avatar. Tabs share one width so the active pill glides by
- * translation; focusing a tab selects it (docs/NAVIGATION.md "Tabs").
+ * translation; focusing a tab selects it (docs/NAVIGATION.md "Tabs"). `y` scrolls it off with Home's content.
  */
-export function TopBar({labels, active, onSelect, onEnter, downTo = {}}) {
+export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0}) {
   return (
-    <View className="absolute left-0 right-0 top-0 h-[80px]" pointerEvents="box-none">
+    <motion.View className="absolute left-0 right-0 top-0 h-[80px]" pointerEvents="box-none"
+      initial={false} animate={{y: -y}} transition={transitions.screen}>
       <View className="absolute left-12 top-0 bottom-0 flex-row items-center">
         <Text className="font-semi text-xl text-white">Jelly<Text className="font-semi text-xl text-accent">5</Text></Text>
       </View>
@@ -54,6 +55,6 @@ export function TopBar({labels, active, onSelect, onEnter, downTo = {}}) {
           <Text className="font-semi text-md text-white">K</Text>
         </View>
       </View>
-    </View>
+    </motion.View>
   );
 }
