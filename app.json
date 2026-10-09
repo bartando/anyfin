@@ -1,0 +1,18 @@
+{
+  "$schema": "../../ps5-react/app.schema.json",
+  "titleId": "PPSA99080",
+  "contentId": "UP9000-PPSA99080_00-JELLY50000000000",
+  "name": "Jelly5",
+  "version": "01.000.000",
+  "render": {
+    "width": 3840,
+    "height": 2160
+  },
+  "surface": {
+    "width": 3840,
+    "height": 2160
+  },
+  "timeoutSeconds": 0,
+  "networking": true,
+  "filesystemAccess": "console"
+}
