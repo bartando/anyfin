@@ -45,24 +45,54 @@ function gap(at) {
 }
 
 /**
- * The grid's cells: each letter starts a row of its own (Infuse's grid), so the last row of a letter
- * is filled up with empty cells, and a jump lands at the row's start. `cellOf` maps a title's place
- * in the library to its cell. Without the letter index the titles run on.
+ * Where the grid's cells come from: each letter starts a row of its own (Infuse's grid), so the last
+ * row of a letter is filled up with empty cells, and a jump lands at the row's start. `cellOf` maps a
+ * title's place in the library to its cell. Without the letter index the titles run on.
  */
-function layOut(data, index, columns) {
-  if (!index.starts.length) return {cells: data, cellOf: at => at};
-  const cells = [], letterCell = new Map();
-  index.starts.forEach(([letter, start], at) => {
-    const end = Math.min(data.length, at + 1 < index.starts.length ? index.starts[at + 1][1] : data.length);
-    letterCell.set(letter, cells.length);
-    for (let i = start; i < end; i++) cells.push(data[i]);
-    while (cells.length % columns) cells.push(gap(cells.length));
+function planGrid(index, total, columns) {
+  if (!index.starts.length || !total) return {padded: false, length: total ?? 0, cellOf: at => at, titleAt: at => at, segments: []};
+  // Each letter's titles [start, end) go to the cells from `cell` on.
+  const segments = [];
+  let cell = 0;
+  index.starts.forEach(([, start], at) => {
+    const end = Math.min(total, at + 1 < index.starts.length ? index.starts[at + 1][1] : total);
+    segments.push({start, end, cell});
+    cell += Math.max(0, end - start);
+    cell = Math.ceil(cell / columns) * columns;
   });
   const cellOf = at => {
-    const letter = index.letterAt(at);
-    return letter ? letterCell.get(letter) + at - index.first.get(letter) : at;
+    let lo = 0, hi = segments.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (segments[mid].start <= at) lo = mid;
+      else hi = mid - 1;
+    }
+    return segments[lo].start <= at ? segments[lo].cell + at - segments[lo].start : at;
   };
-  return {cells, cellOf};
+  // The title in a cell, or -1 for a cell finishing a letter's row.
+  const titleAt = at => {
+    let lo = 0, hi = segments.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (segments[mid].cell <= at) lo = mid;
+      else hi = mid - 1;
+    }
+    const {start, end, cell: first} = segments[lo];
+    return at - first < end - start ? start + at - first : -1;
+  };
+  return {padded: true, length: cell, cellOf, titleAt, segments};
+}
+
+/** All cells of `plan` filled from `data`: once per letter index, O(library). */
+function fillGrid(plan, data) {
+  const cells = new Array(plan.length);
+  let next = 0;
+  for (const {start, end, cell} of plan.segments) {
+    for (; next < cell; next++) cells[next] = gap(next);
+    for (let i = start; i < end && i < data.length; i++) cells[next++] = data[i];
+  }
+  for (; next < plan.length; next++) cells[next] = gap(next);
+  return cells;
 }
 
 const keyOf = (_, index) => String(index);
@@ -75,7 +105,7 @@ const GAP = {width: px(POSTER.w), height: px(POSTER.h)};
  */
 export function LibraryPage({title, params, version = 0, onOpen, empty, facts, unit = 'TITLE', alphabetical = false}) {
   const key = `${JSON.stringify(params)}#${version}`;
-  const {data, total, error, need, reload} = usePagedItems(params, key);
+  const {data, total, error, need, reload, seq, changesSince} = usePagedItems(params, key);
   const [focused, setFocused] = useState(0);
   const [artAt, setArtAt] = useState(0);
   const pending = useRef(null);
@@ -83,7 +113,25 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
 
   const offsets = useLetterOffsets(params, total, alphabetical);
   const index = useMemo(() => alphabet(offsets, total), [offsets, total]);
-  const grid = useMemo(() => layOut(data, index, POSTER.cols), [data, index]);
+  const plan = useMemo(() => planGrid(index, total, POSTER.cols), [index, total]);
+  // A page arriving patches its cells into a copy; only a new letter index fills the grid afresh.
+  const built = useRef({plan: null, data: null, seq: 0, cells: []});
+  const grid = useMemo(() => {
+    const last = built.current;
+    let cells;
+    if (!plan.padded) cells = data;
+    else if (last.plan !== plan || last.data === null) cells = fillGrid(plan, data);
+    else {
+      const changes = changesSince(last.seq);
+      if (!changes) cells = fillGrid(plan, data);
+      else {
+        cells = last.cells.slice();
+        for (const {from, to} of changes) for (let i = from; i < to; i++) cells[plan.cellOf(i)] = data[i];
+      }
+    }
+    built.current = {plan, data, seq, cells};
+    return {cells, cellOf: plan.cellOf, titleAt: plan.titleAt};
+  }, [plan, data, seq]);
 
   const listRef = useRef(null);
   const focusedAt = useRef(-1);
@@ -142,17 +190,26 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
     pending.current = setTimeout(() => setArtAt(item.slot), PREVIEW_DELAY_MS);
   }, []);
   // A card still waiting for its page asks for it as it mounts: only pages near the screen load.
-  const renderItem = useCallback(({item}) => {
-    if (item.gap) return <View style={GAP} />;
-    if (item.placeholder) need(item.slot);
+  // A cell whose page has not arrived is a hole: its card gets a placeholder made on the spot and asks
+  // for the page as it mounts, so only pages near the screen load.
+  const titleAt = useRef(grid.titleAt);
+  titleAt.current = grid.titleAt;
+  const renderItem = useCallback(({item, index: at}) => {
+    if (item?.gap) return <View style={GAP} />;
+    if (!item) {
+      const slot = titleAt.current(at);
+      if (slot < 0) return <View style={GAP} />;
+      need(slot);
+      item = {key: `slot:${slot}`, slot, placeholder: true, title: '', genres: [], cast: []};
+    }
     return <PosterCard item={item} onPress={onOpen} onFocus={onFocus} onBlur={onBlur} />;
   }, [onOpen, onFocus, need]);
 
   // The art stays on the last loaded title while the focused one's page is on its way.
   const lastArt = useRef(null);
   const art = data[artAt];
-  if (art && !art.placeholder) lastArt.current = art;
-  else if (!art) lastArt.current = data[0]?.placeholder ? null : data[0] ?? null;
+  if (art) lastArt.current = art;
+  else if (!lastArt.current) lastArt.current = data[0] ?? null;
 
   if (total == null || total === 0) {
     const message = total === 0 ? empty ?? 'Nothing in this library yet.'
@@ -178,7 +235,7 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
       </View>
       <View className="absolute left-12 top-[92px] w-[640px] gap-2">
         <Text className="font-semi text-xs text-accent-soft tracking-widest">{title.toUpperCase()} · {count}</Text>
-        {shown.placeholder ? <View className="h-[40px]" /> : (
+        {!shown ? <View className="h-[40px]" /> : (
           <>
             <Text className="font-semi text-xl text-white truncate">{clean(shown.title)}</Text>
             {facts ? <Text className="font-inter text-sm text-slate-300">{facts(shown)}</Text> : <MetaLine item={shown} genres={3} />}
