@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {Image, View, motion} from '@ps5-react/core';
 import {SIZES, px} from '../theme.js';
-import {backdropUrl} from '../lib/catalog.js';
+import {backdropUrl} from '../lib/art.js';
 
 let nextLayer = 1;
 

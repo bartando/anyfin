@@ -1,5 +1,5 @@
 import {Text, View} from '@ps5-react/core';
-import {metaParts} from '../lib/catalog.js';
+import {metaParts} from '../lib/format.js';
 import {StarIcon} from './Icons.jsx';
 
 const dot = <Text className="font-inter text-sm text-slate-400">·</Text>;

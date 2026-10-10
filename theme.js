@@ -7,7 +7,8 @@ export const SCREEN = {w: 1280, h: 720};
 
 // 240 logical = 720 render px: inside the 768 px transform buffer, so the focus scale renders.
 export const CARD = {w: 240, h: 135, radius: 12, gap: 16};
-export const POSTER = {w: 176, h: 264, radius: 12, colGap: 25, rowGap: 28, cols: 6};
+// colGap leaves room on the right for the A–Z bar.
+export const POSTER = {w: 176, h: 264, radius: 12, colGap: 18, rowGap: 28, cols: 6};
 export const CAST = {size: 96};
 
 export const FOCUS_SCALE = 1.05;
@@ -17,15 +18,18 @@ export const RING_GAP = 4;
 export const HERO_ROTATE_MS = 8000;
 export const PREVIEW_DELAY_MS = 350;
 
-// TMDB size per use. Images decode at their box size and are never enlarged, so a source smaller
-// than its box is upscaled on every repaint; w1280 is the largest backdrop under the 5 MP limit.
+// Image width per use, in render px: the server scales art to it. Images decode at their box size and
+// are never enlarged, so a smaller source is upscaled on every repaint. Backdrops stop at 1280: a
+// server that proxies TMDB rounds widths up to its sizes, and past w1280 that is the original, which
+// can be over the 5 MP decode limit.
 export const SIZES = {
-  hero: 'w1280',
-  card: 'w780',
-  poster: 'w780',
-  logo: 'w500',
-  cardLogo: 'w500',
-  profile: 'h632',
+  hero: 1280,
+  card: 720,
+  poster: 528,
+  logo: 800,
+  cardLogo: 400,
+  profile: 400,
+  portrait: 600,
 };
 
 export const COLORS = {

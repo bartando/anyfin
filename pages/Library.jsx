@@ -1,49 +1,173 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView, Text, View, VirtualList} from '@ps5-react/core';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {Controller, ScrollView, Text, View, VirtualList, useIsScreenActive, useNavigationEvents} from '@ps5-react/core';
 import {POSTER, PREVIEW_DELAY_MS} from '../theme.js';
-import {clampText, clean} from '../lib/catalog.js';
+import {LETTERS, clampText, clean, formatCount} from '../lib/format.js';
+import {loadLetterOffsets} from '../lib/jellyfin/library.js';
+import {usePagedItems} from '../lib/jellyfin/paged.js';
+import {useLoad} from '../lib/useLoad.js';
+import {AlphaBar, LetterBadge} from '../components/AlphaBar.jsx';
 import {Backdrop} from '../components/Backdrop.jsx';
+import {Button} from '../components/Button.jsx';
 import {PosterCard} from '../components/Cards.jsx';
 import {MetaLine} from '../components/Meta.jsx';
 
 const BACKDROP = {w: 760, h: 428};
+// Holding Up or Down this many repeats switches from rows to letters, as Infuse does; a pause this
+// long between repeats ends it.
+const HOLD_MOVES = 5;
+const REPEAT_GAP_MS = 260;
+const LETTER_IDLE_MS = 450;
+const NO_LETTERS = {first: new Map(), available: new Set(), letterAt: () => null};
 
-/** Movies / TV Shows: a poster grid; the focused poster's title, meta and art fill the header. */
-export function LibraryPage({title, list, onOpen}) {
-  const [current, setCurrent] = useState(list[0]);
-  const [art, setArt] = useState(list[0]);
+/** Where each A–Z letter starts, from how many titles sort before it; letters with none are left out. */
+function alphabet(offsets, total) {
+  if (!offsets || !total) return NO_LETTERS;
+  const first = new Map();
+  LETTERS.forEach((letter, at) => {
+    const start = offsets.get(letter);
+    const end = at + 1 < LETTERS.length ? offsets.get(LETTERS[at + 1]) : total;
+    if (end > start) first.set(letter, start);
+  });
+  const starts = [...first.entries()];
+  const letterAt = index => {
+    let letter = null;
+    for (const [candidate, start] of starts) if (start <= index) letter = candidate;
+    return letter;
+  };
+  return {first, available: new Set(first.keys()), letterAt};
+}
+
+const keyOf = (_, index) => String(index);
+
+/**
+ * A library tab: a poster grid of a whole server library, loaded a page at a time as it scrolls; the
+ * focused poster's title, meta and art fill the header. `params` is the Jellyfin items query;
+ * `version` reloads it (Favorites after a toggle).
+ */
+export function LibraryPage({title, params, version = 0, onOpen, empty, facts, unit = 'TITLE', alphabetical = false}) {
+  const key = `${JSON.stringify(params)}#${version}`;
+  const {data, total, error, need, reload} = usePagedItems(params, key);
+  const [focused, setFocused] = useState(0);
+  const [artAt, setArtAt] = useState(0);
   const pending = useRef(null);
   useEffect(() => () => clearTimeout(pending.current), []);
 
-  const onFocus = useCallback(item => {
-    setCurrent(item);
-    clearTimeout(pending.current);
-    pending.current = setTimeout(() => setArt(item), PREVIEW_DELAY_MS);
-  }, []);
-  const renderItem = useCallback(({item}) => <PosterCard item={item} onPress={onOpen} onFocus={onFocus} />,
-    [onOpen, onFocus]);
+  // The letter index costs a request per letter: only once the tab has been opened.
+  const active = useIsScreenActive();
+  const opened = useRef(false);
+  if (active) opened.current = true;
+  const {data: offsets} = useLoad(alphabetical && total && opened.current ? `${key}|${total}` : null,
+    () => loadLetterOffsets(params, LETTERS));
+  const index = useMemo(() => alphabet(offsets, total), [offsets, total]);
 
+  const listRef = useRef(null);
+  const focusedAt = useRef(-1);
+  const hold = useRef({direction: null, count: 0, last: 0, letter: null, timer: null}).current;
+  const [jumpLetter, setJumpLetter] = useState(null);
+  useEffect(() => () => clearTimeout(hold.timer), []);
+
+  // A held Up/Down repeats a move each tick. After HOLD_MOVES of them each repeat jumps to the next
+  // letter that has titles instead, with a tick of the motors; the pause after release ends it.
+  useNavigationEvents(event => {
+    // While a jump lands, focus is nowhere for a frame or two and moves report blocked: the hold goes on.
+    if (event.type !== 'move' && !(event.type === 'blocked' && hold.letter)) return;
+    const vertical = event.direction === 'up' || event.direction === 'down';
+    // Mid-jump the old card can lose focus before the new one takes it; the hold carries on.
+    if (!alphabetical || !vertical || (focusedAt.current < 0 && !hold.letter) || !index.available.size) {
+      hold.direction = null;
+      hold.count = 0;
+      return;
+    }
+    const now = Date.now();
+    hold.count = hold.direction === event.direction && now - hold.last < REPEAT_GAP_MS ? hold.count + 1 : 1;
+    hold.direction = event.direction;
+    hold.last = now;
+    clearTimeout(hold.timer);
+    hold.timer = setTimeout(() => {
+      hold.letter = null;
+      hold.count = 0;
+      setJumpLetter(null);
+    }, LETTER_IDLE_MS);
+    if (hold.count < HOLD_MOVES) return;
+    const from = LETTERS.indexOf(hold.letter ?? index.letterAt(Math.max(0, focusedAt.current)));
+    const step = event.direction === 'down' ? 1 : -1;
+    let at = from + step;
+    while (at >= 0 && at < LETTERS.length && !index.available.has(LETTERS[at])) at += step;
+    if (at < 0 || at >= LETTERS.length) return;
+    hold.letter = LETTERS[at];
+    setJumpLetter(hold.letter);
+    listRef.current?.focusIndex(index.first.get(hold.letter));
+    Controller.vibrate(0.25, 35);
+  });
+
+  const onBlur = useCallback(() => { focusedAt.current = -1; }, []);
+  const onFocus = useCallback(item => {
+    focusedAt.current = item.slot;
+    setFocused(item.slot);
+    clearTimeout(pending.current);
+    pending.current = setTimeout(() => setArtAt(item.slot), PREVIEW_DELAY_MS);
+  }, []);
+  // A card still waiting for its page asks for it as it mounts: only pages near the screen load.
+  const renderItem = useCallback(({item, index: at}) => {
+    if (item.placeholder) need(at);
+    return <PosterCard item={item} onPress={onOpen} onFocus={onFocus} onBlur={onBlur} />;
+  }, [onOpen, onFocus, need]);
+
+  // The art stays on the last loaded title while the focused one's page is on its way.
+  const lastArt = useRef(null);
+  const art = data[artAt];
+  if (art && !art.placeholder) lastArt.current = art;
+  else if (!art) lastArt.current = data[0]?.placeholder ? null : data[0] ?? null;
+
+  if (total == null || total === 0) {
+    const message = total === 0 ? empty ?? 'Nothing in this library yet.'
+      : error ? `Could not load ${title}: ${error.message}` : 'Loading…';
+    return (
+      <View className="absolute left-12 top-[92px] w-[640px] gap-3">
+        <Text className="font-semi text-xs text-accent-soft tracking-widest">{title.toUpperCase()}</Text>
+        <Text className="font-inter text-md text-slate-300">{message}</Text>
+        {error && total == null && <View className="flex-row"><Button label="Retry" onPress={reload} /></View>}
+      </View>
+    );
+  }
+
+  const shown = data[Math.min(focused, total - 1)];
+  const count = `${formatCount(total)} ${total === 1 ? unit : `${unit}S`}`;
   return (
     <View className="absolute inset-0">
       <View className="absolute right-0 top-0 w-[760px] h-[428px]" pointerEvents="none">
-        <Backdrop item={art} w={BACKDROP.w} h={BACKDROP.h} fadeMs={350} />
+        <Backdrop item={lastArt.current} w={BACKDROP.w} h={BACKDROP.h} fadeMs={350} />
         <View className="absolute left-0 top-0 bottom-0 w-[420px] bg-gradient-to-r from-canvas to-transparent" />
         <View className="absolute left-0 right-0 bottom-0 h-[260px] bg-gradient-to-t from-canvas to-transparent" />
         <View className="absolute left-0 right-0 top-0 h-[120px] bg-gradient-to-b from-canvas/70 to-transparent" />
       </View>
       <View className="absolute left-12 top-[92px] w-[640px] gap-2">
-        <Text className="font-semi text-xs text-accent-soft tracking-widest">{title.toUpperCase()} · {list.length} TITLES</Text>
-        <Text className="font-semi text-xl text-white truncate">{clean(current.title)}</Text>
-        <MetaLine item={current} genres={3} />
-        <Text className="font-inter text-sm text-slate-300 line-clamp-2">{clampText(current.overview, 180)}</Text>
+        <Text className="font-semi text-xs text-accent-soft tracking-widest">{title.toUpperCase()} · {count}</Text>
+        {shown.placeholder ? <View className="h-[40px]" /> : (
+          <>
+            <Text className="font-semi text-xl text-white truncate">{clean(shown.title)}</Text>
+            {facts ? <Text className="font-inter text-sm text-slate-300">{facts(shown)}</Text> : <MetaLine item={shown} genres={3} />}
+            <Text className="font-inter text-sm text-slate-300 line-clamp-2">{clampText(shown.overview, 180)}</Text>
+          </>
+        )}
       </View>
       <ScrollView className="absolute left-0 right-0 bottom-0 top-[262px]">
         <View className="px-12 py-4">
-          <VirtualList data={list} keyExtractor={item => item.key} renderItem={renderItem}
+          <VirtualList ref={listRef} data={data} keyExtractor={keyOf} renderItem={renderItem}
             numColumns={POSTER.cols} itemHeight={POSTER.h} rowGap={POSTER.rowGap} columnGap={POSTER.colGap} />
         </View>
         <View className="h-[24px]" />
       </ScrollView>
+      {alphabetical && index.available.size > 0 && (
+        <View className="absolute right-[12px] top-[96px]" pointerEvents="none">
+          <AlphaBar available={index.available} current={jumpLetter ?? index.letterAt(focused)} jumping={!!jumpLetter} />
+        </View>
+      )}
+      {jumpLetter && (
+        <View className="absolute left-0 right-0 top-[262px] bottom-0" pointerEvents="none">
+          <LetterBadge letter={jumpLetter} />
+        </View>
+      )}
     </View>
   );
 }

@@ -33,10 +33,33 @@ export const SearchIcon = ({size = 18, color = '#ffffff'}) => (
 
 export const BackspaceIcon = ({size = 18, color = '#ffffff'}) => (
   <Icon size={size}>
-    <Path d="M8.5 5H20a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H8.5L2.5 12z" fill="none" stroke={color} strokeWidth="2"
-      strokeLinejoin="round" />
-    <Line x1="11" y1="9" x2="17" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    <Line x1="17" y1="9" x2="11" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path d="M9 5h10.5A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5H9l-6.5-7z" fill="none" stroke={color}
+      strokeWidth="2" strokeLinejoin="round" />
+    <Line x1="11.5" y1="9.5" x2="16.5" y2="14.5" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <Line x1="16.5" y1="9.5" x2="11.5" y2="14.5" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+  </Icon>
+);
+
+const HEART = 'M12 20.3s-7.6-4.7-7.6-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.6 2.7c0 5.5-7.6 10.2-7.6 10.2z';
+
+export const HeartIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}><Path d={HEART} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" /></Icon>
+);
+
+export const HeartFilledIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}><Path d={HEART} fill={color} stroke={color} strokeWidth="2" strokeLinejoin="round" /></Icon>
+);
+
+// Controller face-button glyphs for shortcut hints.
+export const TriangleGlyph = ({size = 12, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M12 4l9 15.5H3z" fill="none" stroke={color} strokeWidth="2.4" strokeLinejoin="round" />
+  </Icon>
+);
+
+export const SquareGlyph = ({size = 12, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M5 5h14v14H5z" fill="none" stroke={color} strokeWidth="2.4" strokeLinejoin="round" />
   </Icon>
 );
 
@@ -44,5 +67,28 @@ export const BackIcon = ({size = 18, color = '#ffffff'}) => (
   <Icon size={size}>
     <Path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round"
       strokeLinejoin="round" />
+  </Icon>
+);
+
+export const CheckIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={color} strokeWidth="2.8" strokeLinecap="round"
+      strokeLinejoin="round" />
+  </Icon>
+);
+
+export const ServerIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v4A1.5 1.5 0 0 1 18.5 11h-13A1.5 1.5 0 0 1 4 9.5zM4 14.5A1.5 1.5 0 0 1 5.5 13h13a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"
+      fill="none" stroke={color} strokeWidth="2" />
+    <Circle cx="8" cy="7.5" r="1.3" fill={color} />
+    <Circle cx="8" cy="16.5" r="1.3" fill={color} />
+  </Icon>
+);
+
+export const LockIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path d="M5.5 10.5h13v9.5h-13z" fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
   </Icon>
 );

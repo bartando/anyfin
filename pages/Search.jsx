@@ -1,80 +1,59 @@
-import {memo, useCallback, useMemo, useState} from 'react';
-import {FocusScope, ScrollView, Text, View, VirtualList, useIsFocused} from '@ps5-react/core';
-import {CARD, px} from '../theme.js';
-import {clean, search} from '../lib/catalog.js';
-import {BackdropCard} from '../components/Cards.jsx';
-import {BackspaceIcon, SearchIcon} from '../components/Icons.jsx';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {FocusScope, ScrollView, Text, View, VirtualList, useFocus} from '@ps5-react/core';
+import {CARD} from '../theme.js';
+import {searchItems} from '../lib/jellyfin/library.js';
+import {CaptionedCard} from '../components/Cards.jsx';
+import {Keyboard, TextField, useTextInput} from '../components/Keyboard.jsx';
 
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
-const KEY = 52, KEY_GAP = 6;
+// The server is asked once typing pauses this long, not on every key.
+const SEARCH_DELAY_MS = 350;
 
-function KeyLabel({children}) {
-  const focused = useIsFocused();
-  return <Text focused={focused} className="font-semi text-md text-white focused:text-canvas">{children}</Text>;
-}
-
-function DeleteGlyph() {
-  return <BackspaceIcon size={20} color={useIsFocused() ? '#0b0b12' : '#ffffff'} />;
-}
-
-// Memoized and pressed with its own label, so typing re-renders the query line, not all 39 keys.
-const Key = memo(function Key({label, wide = 1, onPress, children}) {
-  return (
-    <View focusKey={`key:${label}`} onPress={() => onPress(label)} style={{width: px(KEY * wide + KEY_GAP * (wide - 1))}}
-      className="h-[44px] rounded-lg bg-white/10 items-center justify-center focused:bg-white">
-      {children ?? <KeyLabel>{label}</KeyLabel>}
-    </View>
-  );
-});
-
-const DELETE_GLYPH = <DeleteGlyph />;
-
-function ResultCard({item, onOpen}) {
-  return (
-    <View className="gap-2">
-      <BackdropCard item={item} onPress={onOpen} />
-      <Text className="font-inter text-xs text-slate-300 truncate w-[240px]">{clean(item.title)}</Text>
-    </View>
-  );
-}
-
-/** Search: a letter-grid keyboard filters the catalog by title; results are a virtualized card grid. */
+/** Search: the letter-grid keyboard searches the server's library; results are a virtualized grid. */
 export function SearchPage({onOpen}) {
-  const [query, setQuery] = useState('');
-  const results = useMemo(() => search(query), [query]);
-  const type = useCallback(ch => setQuery(q => (q + ch).slice(0, 24)), []);
-  const space = useCallback(() => type(' '), []);
-  const remove = useCallback(() => setQuery(q => q.slice(0, -1)), []);
-  const clear = useCallback(() => setQuery(''), []);
-  const renderItem = useCallback(({item}) => <ResultCard item={item} onOpen={onOpen} />, [onOpen]);
+  const input = useTextInput('', 24);
+  const query = input.text.trim();
+  const [results, setResults] = useState({query: '', items: [], error: null});
+  const {focus} = useFocus();
+  const focusRef = useRef(focus);
+  focusRef.current = focus;
+
+  useEffect(() => {
+    if (!query) {
+      setResults({query: '', items: [], error: null});
+      return undefined;
+    }
+    let live = true;
+    const id = setTimeout(() => searchItems(query).then(
+      items => live && setResults({query, items, error: null}),
+      error => live && setResults({query, items: [], error})), SEARCH_DELAY_MS);
+    return () => {
+      live = false;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  const renderItem = useCallback(({item}) => <CaptionedCard item={item} onPress={onOpen} />, [onOpen]);
+  const settled = results.query === query;
+  const status = !query ? 'Search your whole library by title'
+    : !settled ? 'Searching…'
+      : results.error ? `Search failed: ${results.error.message}`
+        : results.items.length ? `${results.items.length} titles` : `No titles match "${query}"`;
 
   return (
     <View className="absolute inset-0">
       <View className="absolute left-12 top-[96px] w-[342px] gap-4">
-        <View className="h-[52px] px-4 flex-row items-center gap-3 rounded-xl bg-white/10 border border-white/15">
-          <SearchIcon size={20} color="#a9a0ff" />
-          <Text className={`font-inter text-md ${query ? 'text-white' : 'text-slate-400'} truncate`}>
-            {query || 'Search movies & TV'}
-          </Text>
-        </View>
-        <FocusScope focusKey="keyboard">
-          <View className="flex-row flex-wrap gap-[6px]">
-            {LETTERS.map(ch => <Key key={ch} label={ch} onPress={type} />)}
-            <Key label="Space" wide={2} onPress={space} />
-            <Key label="Delete" wide={2} onPress={remove}>{DELETE_GLYPH}</Key>
-            <Key label="Clear" wide={2} onPress={clear} />
-          </View>
-        </FocusScope>
-        <Text className="font-inter text-xs text-slate-400">
-          {results.length ? `${results.length} titles` : `No titles match "${query}"`}
-        </Text>
+        <TextField text={input.text} cursor={input.cursor} placeholder="Search movies & TV" />
+        <Keyboard input={input} layout="search" onSubmit={() => focusRef.current('results')} />
+        <Text className="font-inter text-xs text-slate-400">{status}</Text>
       </View>
-      <ScrollView className="absolute left-[440px] right-0 top-[84px] bottom-0">
-        <View className="pl-3 pr-12 py-3">
-          <VirtualList key={query} data={results} keyExtractor={item => item.key} renderItem={renderItem}
-            numColumns={3} itemHeight={CARD.h + 26} rowGap={20} columnGap={CARD.gap} />
-        </View>
-      </ScrollView>
+      <FocusScope focusKey="results">
+        <ScrollView className="absolute left-[440px] right-0 top-[84px] bottom-0">
+          <View className="pl-3 pr-12 py-3">
+            <VirtualList key={results.query} data={results.items} keyExtractor={item => item.key} renderItem={renderItem}
+              numColumns={3} itemHeight={CARD.h + 46} rowGap={20} columnGap={CARD.gap} />
+          </View>
+        </ScrollView>
+      </FocusScope>
     </View>
   );
 }

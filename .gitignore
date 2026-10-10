@@ -1,3 +1,4 @@
 *.bmp
 .DS_Store
 tools/__pycache__/
+lib/tmdb-token.js

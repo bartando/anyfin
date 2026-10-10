@@ -1,7 +1,8 @@
 import {useState} from 'react';
 import {Image, Text, View} from '@ps5-react/core';
 import {px} from '../theme.js';
-import {clean, logoUrl} from '../lib/catalog.js';
+import {clean} from '../lib/format.js';
+import {logoUrl} from '../lib/art.js';
 
 /**
  * The title's logo art, fitted into w×h (logical px) and pinned bottom-left. Once onLoad reports the
@@ -22,8 +23,7 @@ export function Logo({item, w, h}) {
     );
   }
   const onLoad = ({nativeEvent: {source}}) => {
-    // w500 is the biggest TMDB logo under the 4 MiB encoded cap (originals run to 11 MB), and decode
-    // never enlarges, so fit by aspect and let the draw upscale (at most MAX_UPSCALE).
+    // Decode never enlarges, so fit by aspect and let the draw upscale (at most MAX_UPSCALE).
     const s = Math.min(px(w) / source.width, px(h) / source.height, MAX_UPSCALE);
     setState({key: item.key, failed: false,
       width: Math.round(source.width * s), height: Math.round(source.height * s)});
