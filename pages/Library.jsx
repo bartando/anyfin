@@ -1,10 +1,9 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Controller, ScrollView, Text, View, VirtualList, useIsScreenActive, useNavigationEvents} from '@ps5-react/core';
-import {POSTER, PREVIEW_DELAY_MS} from '../theme.js';
+import {Controller, ScrollView, Text, View, VirtualList, useNavigationEvents} from '@ps5-react/core';
+import {POSTER, PREVIEW_DELAY_MS, px} from '../theme.js';
 import {LETTERS, clampText, clean, formatCount} from '../lib/format.js';
-import {loadLetterOffsets} from '../lib/jellyfin/library.js';
+import {useLetterOffsets} from '../lib/jellyfin/letters.js';
 import {usePagedItems} from '../lib/jellyfin/paged.js';
-import {useLoad} from '../lib/useLoad.js';
 import {AlphaBar, LetterBadge} from '../components/AlphaBar.jsx';
 import {Backdrop} from '../components/Backdrop.jsx';
 import {Button} from '../components/Button.jsx';
@@ -17,7 +16,7 @@ const BACKDROP = {w: 760, h: 428};
 const HOLD_MOVES = 5;
 const REPEAT_GAP_MS = 260;
 const LETTER_IDLE_MS = 450;
-const NO_LETTERS = {first: new Map(), available: new Set(), letterAt: () => null};
+const NO_LETTERS = {first: new Map(), starts: [], available: new Set(), letterAt: () => null};
 
 /** Where each A–Z letter starts, from how many titles sort before it; letters with none are left out. */
 function alphabet(offsets, total) {
@@ -34,10 +33,40 @@ function alphabet(offsets, total) {
     for (const [candidate, start] of starts) if (start <= index) letter = candidate;
     return letter;
   };
-  return {first, available: new Set(first.keys()), letterAt};
+  return {first, starts, available: new Set(first.keys()), letterAt};
+}
+
+const gaps = new Map();
+/** An empty cell finishing a letter's last row; the same object per cell, for the rows' memo. */
+function gap(at) {
+  let cell = gaps.get(at);
+  if (!cell) gaps.set(at, cell = Object.freeze({key: `gap:${at}`, gap: true}));
+  return cell;
+}
+
+/**
+ * The grid's cells: each letter starts a row of its own (Infuse's grid), so the last row of a letter
+ * is filled up with empty cells, and a jump lands at the row's start. `cellOf` maps a title's place
+ * in the library to its cell. Without the letter index the titles run on.
+ */
+function layOut(data, index, columns) {
+  if (!index.starts.length) return {cells: data, cellOf: at => at};
+  const cells = [], letterCell = new Map();
+  index.starts.forEach(([letter, start], at) => {
+    const end = Math.min(data.length, at + 1 < index.starts.length ? index.starts[at + 1][1] : data.length);
+    letterCell.set(letter, cells.length);
+    for (let i = start; i < end; i++) cells.push(data[i]);
+    while (cells.length % columns) cells.push(gap(cells.length));
+  });
+  const cellOf = at => {
+    const letter = index.letterAt(at);
+    return letter ? letterCell.get(letter) + at - index.first.get(letter) : at;
+  };
+  return {cells, cellOf};
 }
 
 const keyOf = (_, index) => String(index);
+const GAP = {width: px(POSTER.w), height: px(POSTER.h)};
 
 /**
  * A library tab: a poster grid of a whole server library, loaded a page at a time as it scrolls; the
@@ -52,13 +81,9 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
   const pending = useRef(null);
   useEffect(() => () => clearTimeout(pending.current), []);
 
-  // The letter index costs a request per letter: only once the tab has been opened.
-  const active = useIsScreenActive();
-  const opened = useRef(false);
-  if (active) opened.current = true;
-  const {data: offsets} = useLoad(alphabetical && total && opened.current ? `${key}|${total}` : null,
-    () => loadLetterOffsets(params, LETTERS));
+  const offsets = useLetterOffsets(params, total, alphabetical);
   const index = useMemo(() => alphabet(offsets, total), [offsets, total]);
+  const grid = useMemo(() => layOut(data, index, POSTER.cols), [data, index]);
 
   const listRef = useRef(null);
   const focusedAt = useRef(-1);
@@ -96,9 +121,18 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
     if (at < 0 || at >= LETTERS.length) return;
     hold.letter = LETTERS[at];
     setJumpLetter(hold.letter);
-    listRef.current?.focusIndex(index.first.get(hold.letter));
+    listRef.current?.focusIndex(grid.cellOf(index.first.get(hold.letter)));
     Controller.vibrate(0.25, 35);
   });
+
+  // The letter index arriving pads the rows and moves the titles to other cells: focus follows its title.
+  // (A page arriving changes the cells too, but no title moves.)
+  const laidOut = useRef(index);
+  useEffect(() => {
+    if (laidOut.current === index) return;
+    laidOut.current = index;
+    if (focusedAt.current >= 0) listRef.current?.focusIndex(grid.cellOf(focusedAt.current));
+  }, [index]);
 
   const onBlur = useCallback(() => { focusedAt.current = -1; }, []);
   const onFocus = useCallback(item => {
@@ -108,8 +142,9 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
     pending.current = setTimeout(() => setArtAt(item.slot), PREVIEW_DELAY_MS);
   }, []);
   // A card still waiting for its page asks for it as it mounts: only pages near the screen load.
-  const renderItem = useCallback(({item, index: at}) => {
-    if (item.placeholder) need(at);
+  const renderItem = useCallback(({item}) => {
+    if (item.gap) return <View style={GAP} />;
+    if (item.placeholder) need(item.slot);
     return <PosterCard item={item} onPress={onOpen} onFocus={onFocus} onBlur={onBlur} />;
   }, [onOpen, onFocus, need]);
 
@@ -153,7 +188,7 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
       </View>
       <ScrollView className="absolute left-0 right-0 bottom-0 top-[262px]">
         <View className="px-12 py-4">
-          <VirtualList ref={listRef} data={data} keyExtractor={keyOf} renderItem={renderItem}
+          <VirtualList ref={listRef} data={grid.cells} keyExtractor={keyOf} renderItem={renderItem}
             numColumns={POSTER.cols} itemHeight={POSTER.h} rowGap={POSTER.rowGap} columnGap={POSTER.colGap} />
         </View>
         <View className="h-[24px]" />
