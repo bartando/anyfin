@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView, Text, View, motion, transitions} from '@ps5-react/core';
+import {memo, useCallback, useEffect, useRef, useState} from 'react';
+import {ScrollView, Text, View, motion, transitions, useIsScreenActive} from '@ps5-react/core';
 import {HERO_ROTATE_MS, PREVIEW_DELAY_MS, SCREEN, px} from '../theme.js';
 import {clampText, heroItems, items, rows} from '../lib/catalog.js';
 import {Backdrop} from '../components/Backdrop.jsx';
@@ -22,7 +22,7 @@ const rowOffset = index => Math.min(HERO_H + index * ROW_H - ROW_TOP, CONTENT_H 
 // Hero overviews are clamped to three lines and also kept under the engine's 255-byte text node cap.
 const HERO_OVERVIEW_BYTES = 200;
 
-function HeroInfo({item, onPlay, onMore, onFocus}) {
+const HeroInfo = memo(function HeroInfo({item, onPlay, onMore, onFocus}) {
   return (
     <View className="absolute left-12 top-[104px] w-[600px] gap-4">
       <motion.View key={item.key} className="gap-4" initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}}
@@ -37,20 +37,23 @@ function HeroInfo({item, onPlay, onMore, onFocus}) {
       </View>
     </View>
   );
-}
+});
 
-function Row({row, onOpen, onPreview}) {
+// Memoized with a stable onPreview: every focus move scrolls the page (a new scrollY), which must not
+// re-render all 75 cards.
+const Row = memo(function Row({row, index, onOpen, onPreview}) {
+  const onFocus = useCallback(item => onPreview(item, index), [onPreview, index]);
   return (
     <View style={{height: px(ROW_H)}}>
       <Text className="font-semi text-lg text-white px-12">{row.title}</Text>
       <ScrollView horizontal className="flex-row h-[166px]">
         <View className="flex-row gap-4 px-12 py-[14px]">
-          {row.items.map(item => <BackdropCard key={item.key} item={item} onPress={onOpen} onFocus={onPreview} />)}
+          {row.items.map(item => <BackdropCard key={item.key} item={item} onPress={onOpen} onFocus={onFocus} />)}
         </View>
       </ScrollView>
     </View>
   );
-}
+});
 
 /**
  * Home: a crossfading full-bleed backdrop, hero info for the featured title and rows below. The hero
@@ -58,19 +61,23 @@ function Row({row, onOpen, onPreview}) {
  * `scrollY` (logical px) lives in the app because the top bar scrolls away with this page.
  */
 export function HomePage({onOpen, onPlay, scrollY = 0, onScrollY}) {
+  const active = useIsScreenActive();
   const [featured, setFeatured] = useState(heroItems[0]);
   const [rotating, setRotating] = useState(true);
   const pending = useRef(null);
 
   useEffect(() => {
-    if (!rotating) return undefined;
+    if (!rotating || !active) return undefined;
     const id = setTimeout(() => setFeatured(current => {
       const index = heroItems.findIndex(item => item.key === current.key);
       return heroItems[(index + 1) % heroItems.length];
     }), HERO_ROTATE_MS);
     return () => clearTimeout(id);
-  }, [rotating, featured]);
+  }, [rotating, featured, active]);
   useEffect(() => () => clearTimeout(pending.current), []);
+  useEffect(() => {
+    if (!active) clearTimeout(pending.current);
+  }, [active]);
 
   const preview = useCallback((item, rowIndex) => {
     onScrollY(rowOffset(rowIndex));
@@ -106,7 +113,7 @@ export function HomePage({onOpen, onPlay, scrollY = 0, onScrollY}) {
           <HeroInfo item={featured} onPlay={onPlay} onMore={onOpen} onFocus={heroFocus} />
         </View>
         {ROWS.map((row, index) => (
-          <Row key={row.id} row={row} onOpen={onOpen} onPreview={item => preview(item, index)} />
+          <Row key={row.id} row={row} index={index} onOpen={onOpen} onPreview={preview} />
         ))}
       </motion.View>
     </View>

@@ -24,7 +24,7 @@ export const SIZES = {
   card: 'w780',
   poster: 'w780',
   logo: 'w500',
-  cardLogo: 'w300',
+  cardLogo: 'w500',
   profile: 'h632',
 };
 

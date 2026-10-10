@@ -1,4 +1,4 @@
-import {useCallback, useMemo, useState} from 'react';
+import {memo, useCallback, useMemo, useState} from 'react';
 import {FocusScope, ScrollView, Text, View, VirtualList, useIsFocused} from '@ps5-react/core';
 import {CARD, px} from '../theme.js';
 import {clean, search} from '../lib/catalog.js';
@@ -17,14 +17,17 @@ function DeleteGlyph() {
   return <BackspaceIcon size={20} color={useIsFocused() ? '#0b0b12' : '#ffffff'} />;
 }
 
-function Key({label, wide = 1, onPress, children}) {
+// Memoized and pressed with its own label, so typing re-renders the query line, not all 39 keys.
+const Key = memo(function Key({label, wide = 1, onPress, children}) {
   return (
-    <View focusKey={`key:${label}`} onPress={onPress} style={{width: px(KEY * wide + KEY_GAP * (wide - 1))}}
+    <View focusKey={`key:${label}`} onPress={() => onPress(label)} style={{width: px(KEY * wide + KEY_GAP * (wide - 1))}}
       className="h-[44px] rounded-lg bg-white/10 items-center justify-center focused:bg-white">
       {children ?? <KeyLabel>{label}</KeyLabel>}
     </View>
   );
-}
+});
+
+const DELETE_GLYPH = <DeleteGlyph />;
 
 function ResultCard({item, onOpen}) {
   return (
@@ -40,6 +43,9 @@ export function SearchPage({onOpen}) {
   const [query, setQuery] = useState('');
   const results = useMemo(() => search(query), [query]);
   const type = useCallback(ch => setQuery(q => (q + ch).slice(0, 24)), []);
+  const space = useCallback(() => type(' '), []);
+  const remove = useCallback(() => setQuery(q => q.slice(0, -1)), []);
+  const clear = useCallback(() => setQuery(''), []);
   const renderItem = useCallback(({item}) => <ResultCard item={item} onOpen={onOpen} />, [onOpen]);
 
   return (
@@ -53,12 +59,10 @@ export function SearchPage({onOpen}) {
         </View>
         <FocusScope focusKey="keyboard">
           <View className="flex-row flex-wrap gap-[6px]">
-            {LETTERS.map(ch => <Key key={ch} label={ch} onPress={() => type(ch)} />)}
-            <Key label="Space" wide={2} onPress={() => type(' ')} />
-            <Key label="Delete" wide={2} onPress={() => setQuery(q => q.slice(0, -1))}>
-              <DeleteGlyph />
-            </Key>
-            <Key label="Clear" wide={2} onPress={() => setQuery('')} />
+            {LETTERS.map(ch => <Key key={ch} label={ch} onPress={type} />)}
+            <Key label="Space" wide={2} onPress={space} />
+            <Key label="Delete" wide={2} onPress={remove}>{DELETE_GLYPH}</Key>
+            <Key label="Clear" wide={2} onPress={clear} />
           </View>
         </FocusScope>
         <Text className="font-inter text-xs text-slate-400">

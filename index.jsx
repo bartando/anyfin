@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {AnimatePresence, AppRegistry, FocusScope, View, motion, transitions, useFocus} from '@ps5-react/core';
+import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocus}
+  from '@ps5-react/core';
 import {useInterfaceSounds} from './sounds.js';
 import {movies, shows} from './lib/catalog.js';
 import {TopBar} from './components/TopBar.jsx';
@@ -9,19 +10,14 @@ import {LibraryPage} from './pages/Library.jsx';
 import {SearchPage} from './pages/Search.jsx';
 import {DetailPage} from './pages/Detail.jsx';
 
-const TABS = [
-  {label: 'Home', render: props => <HomePage {...props} />},
-  {label: 'Movies', render: props => <LibraryPage title="Movies" list={movies} {...props} />},
-  {label: 'TV Shows', render: props => <LibraryPage title="TV Shows" list={shows} {...props} />},
-  {label: 'Search', render: props => <SearchPage {...props} />},
-];
-const LABELS = TABS.map(tab => tab.label);
+const LABELS = ['Home', 'Movies', 'TV Shows', 'Search'];
 // Spatially, Down from the Search tab lands in the results; the keyboard is where search starts.
 const DOWN_TO = {Search: 'key:A'};
 const TOAST_MS = 2200;
 
 // Pages only translate (ANIMATION.md "Page transitions"): fading a full-screen node is the most
-// expensive effect on the CPU renderer.
+// expensive effect on the CPU renderer. Screens keeps each tab mounted once shown, so switching back
+// rebuilds nothing.
 const screen = {
   hidden: {x: 90},
   shown: {x: 0, transition: transitions.screen},
@@ -62,7 +58,7 @@ function App() {
   const play = useCallback(item => setToast({id: Date.now(), text: `Playback isn't wired up in this demo: ${item.title}`}), []);
   const onAction = action => {
     if (action !== 'l1' && action !== 'r1') return false;
-    const next = (tab + (action === 'r1' ? 1 : TABS.length - 1)) % TABS.length;
+    const next = (tab + (action === 'r1' ? 1 : LABELS.length - 1)) % LABELS.length;
     focus(`tab:${LABELS[next]}`);
     return true;
   };
@@ -71,14 +67,14 @@ function App() {
     <View className="w-screen h-screen bg-canvas">
       <FocusScope onAction={onAction} inert={!!detail}>
         <View className="absolute inset-0">
-          <AnimatePresence mode="wait">
-            <motion.View key={tab} className="absolute inset-0"
-              variants={screen} initial="hidden" animate="shown" exit="gone">
-              <FocusScope focusKey="content" onBack={() => focus('tabs')}>
-                {TABS[tab].render({onOpen: open, onPlay: play, scrollY: homeY, onScrollY: setHomeY})}
-              </FocusScope>
-            </motion.View>
-          </AnimatePresence>
+          <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus('tabs')} preload>
+            <Screen id={0}>
+              <HomePage onOpen={open} onPlay={play} scrollY={homeY} onScrollY={setHomeY} />
+            </Screen>
+            <Screen id={1}><LibraryPage title="Movies" list={movies} onOpen={open} /></Screen>
+            <Screen id={2}><LibraryPage title="TV Shows" list={shows} onOpen={open} /></Screen>
+            <Screen id={3}><SearchPage onOpen={open} onPlay={play} /></Screen>
+          </Screens>
           <TopBar labels={LABELS} active={tab} onSelect={select} onEnter={() => focus('content')}
             downTo={DOWN_TO} y={tab === 0 ? homeY : 0} />
         </View>
