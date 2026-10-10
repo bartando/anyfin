@@ -4,7 +4,6 @@ import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion,
 import {useInterfaceSounds} from './sounds.js';
 import {useSession} from './lib/jellyfin/session.js';
 import {LIBRARIES, loadHome} from './lib/jellyfin/library.js';
-import {episodeCode} from './lib/jellyfin/items.js';
 import {useLoad} from './lib/useLoad.js';
 import {useFavoritesVersion} from './lib/favorites.js';
 import {FAVORITES, TopBar} from './components/TopBar.jsx';
@@ -13,6 +12,7 @@ import {HomePage} from './pages/Home.jsx';
 import {LibraryPage} from './pages/Library.jsx';
 import {SearchPage} from './pages/Search.jsx';
 import {DetailPage} from './pages/Detail.jsx';
+import {PlayerPage} from './pages/Player.jsx';
 import {PersonPage} from './pages/Person.jsx';
 import {CollectionPage} from './pages/Collection.jsx';
 import {AccountPage} from './pages/Account.jsx';
@@ -94,8 +94,11 @@ function Main({session}) {
   }, []);
   const openAccount = useCallback(() => push({type: 'account'}), []);
   const play = useCallback(item => {
-    const name = item.kind === 'episode' ? `${item.seriesTitle ?? ''} ${episodeCode(item)}`.trim() : item.title;
-    setToast({id: Date.now(), text: `Playback isn't wired up yet: ${name}`});
+    if (item.kind === 'tv') {
+      setToast({id: Date.now(), text: `Pick an episode of ${item.title} to play`});
+      return;
+    }
+    push({type: 'player', item});
   }, []);
   const onAction = action => {
     if (action !== 'l1' && action !== 'r1') return false;
@@ -140,6 +143,8 @@ function Main({session}) {
                   onPerson={openPerson} />
               ) : page.type === 'person' ? (
                 <PersonPage person={page.person} active={top} onClose={back} onOpen={open} onPerson={openPerson} />
+              ) : page.type === 'player' ? (
+                <PlayerPage item={page.item} active={top} onClose={back} />
               ) : page.type === 'account' ? (
                 <AccountPage session={session} active={top} onClose={back} />
               ) : (

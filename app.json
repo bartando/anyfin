@@ -14,5 +14,6 @@
   },
   "timeoutSeconds": 0,
   "networking": true,
-  "filesystemAccess": "console"
+  "filesystemAccess": "console",
+  "video": true
 }
