@@ -5,9 +5,10 @@ import {useInterfaceSounds} from './sounds.js';
 import {useMoveTracking} from './lib/lastMove.js';
 import {LaunchIntro} from './components/LaunchIntro.jsx';
 import {useSession} from './lib/jellyfin/session.js';
-import {LIBRARIES, hideFromResume, loadFavoriteRows, loadHome} from './lib/jellyfin/library.js';
+import {LIBRARIES, hideFromResume, loadFavoriteRows, loadHome, loadWatchingRows} from './lib/jellyfin/library.js';
 import {useLoad} from './lib/useLoad.js';
 import {getFlag, toggleFavorite, togglePlayed, useFavoritesVersion} from './lib/favorites.js';
+import {useProgressVersion} from './lib/progress.js';
 import {focusedCard} from './lib/focusedCard.js';
 import {FAVORITES, TopBar} from './components/TopBar.jsx';
 import {Toast} from './components/Toast.jsx';
@@ -32,7 +33,6 @@ const tabKey = tab => (tab === FAVORITES ? 'tab:Favorites' : `tab:${LABELS[tab]}
 const DOWN_TO = {Home: 'hero-play', Search: 'key:A'};
 const TOAST_MS = 2200;
 // Home's favorite rows go after these.
-const BEFORE_FAVORITES = new Set(['resume', 'next-up']);
 const collectionFacts = collection => (collection.childCount ? `${collection.childCount} titles` : '');
 
 // Pages only translate (ANIMATION.md "Page transitions"): fading a full-screen node is the most
@@ -84,21 +84,20 @@ function Main({session, active}) {
   const [toast, setToast] = useState(null);
   const [homeY, setHomeY] = useState(0);
   const favoritesVersion = useFavoritesVersion();
+  const progressVersion = useProgressVersion();
   const {data: loaded, error: homeError} = useLoad(session.token, loadHome);
-  // The rows a toggled favorite reloads stay up meanwhile, so the rows under them do not jump.
-  const {data: favoritesLoaded} = useLoad(`${session.token}#${favoritesVersion}`, loadFavoriteRows);
-  const lastFavorites = useRef([]);
-  if (favoritesLoaded) lastFavorites.current = favoritesLoaded;
-  const favoriteRows = lastFavorites.current;
+  // Reloaded on their own: a toggled favorite, a playback stopped. The rows stay up meanwhile, so the
+  // rows under them do not jump.
+  const {data: favoriteRows} = useLoad(session.token, loadFavoriteRows, favoritesVersion);
+  const {data: watchingReloaded} = useLoad(progressVersion ? session.token : null, loadWatchingRows, progressVersion);
   // Titles taken off Continue Watching leave the row at once; Home loads its rows only once.
   const [unresumed, setUnresumed] = useState(() => new Set());
   const home = useMemo(() => {
     if (!loaded) return loaded;
-    const at = loaded.rows.findLastIndex(row => BEFORE_FAVORITES.has(row.id)) + 1;
-    const rows = [...loaded.rows.slice(0, at), ...favoriteRows, ...loaded.rows.slice(at)]
+    const rows = [...watchingReloaded ?? loaded.watching, ...favoriteRows ?? [], ...loaded.rows]
       .map(row => (row.id === 'resume' ? {...row, items: row.items.filter(item => !unresumed.has(item.id))} : row));
-    return {...loaded, rows: rows.filter(row => row.items.length)};
-  }, [loaded, favoriteRows, unresumed]);
+    return {hero: loaded.hero, rows: rows.filter(row => row.items.length)};
+  }, [loaded, watchingReloaded, favoriteRows, unresumed]);
   const {focus, focusedRect} = useFocusActions();
   const [menu, setMenu] = useState(null);
   const started = useRef(false);

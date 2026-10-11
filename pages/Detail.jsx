@@ -5,6 +5,7 @@ import {clampText, clean, splitText} from '../lib/format.js';
 import {loadEpisodes, loadItem, loadNextEpisode, loadSeasons, loadSimilar} from '../lib/jellyfin/library.js';
 import {episodeCode} from '../lib/jellyfin/items.js';
 import {useLoad} from '../lib/useLoad.js';
+import {useProgressVersion} from '../lib/progress.js';
 import {toggleFavorite, togglePlayed, useIsFavorite, useIsPlayed} from '../lib/favorites.js';
 import {Backdrop} from '../components/Backdrop.jsx';
 import {Button} from '../components/Button.jsx';
@@ -25,14 +26,18 @@ const EPISODES_H = captionedRowH(CARD.h), CAST_H = px(176), SIMILAR_H = captione
 const CARDS_SHOWN = 6, POSTERS_SHOWN = 8, PEOPLE_SHOWN = 9;
 
 /**
- * A season's episodes, fetched once per detail page: the season pills select on focus, so moving
- * along them would otherwise ask again for every season passed, including ones already shown.
+ * A season's episodes, fetched once per detail page and progress `version`: the season pills select
+ * on focus, so moving along them would otherwise ask again for every season passed, including ones
+ * already shown. The list from before a new version stays as `stale` until the new one is in.
  */
-function cachedEpisodes(cache, seriesId, seasonId) {
-  if (!cache.has(seasonId)) {
-    const entry = {list: null};
-    entry.promise = loadEpisodes(seriesId, seasonId).then(list => (entry.list = list),
-      error => { cache.delete(seasonId); throw error; });
+function cachedEpisodes(cache, seriesId, seasonId, version) {
+  const was = cache.get(seasonId);
+  if (was?.version !== version) {
+    const entry = {version, list: null, stale: was?.list ?? was?.stale ?? null};
+    entry.promise = loadEpisodes(seriesId, seasonId).then(list => (entry.list = list), error => {
+      if (cache.get(seasonId) === entry) cache.delete(seasonId);
+      throw error;
+    });
     cache.set(seasonId, entry);
   }
   return cache.get(seasonId).promise;
@@ -72,12 +77,13 @@ const Pills = memo(function Pills({options, selected, onSelect}) {
  * A season's episodes, EPISODES_SHOWN at a time, starting at the block that holds `next`. While they
  * load, placeholders sized from the season's episode count hold their place.
  */
-function Episodes({seriesId, seasonId, count, cache, next, onPlay}) {
-  const cached = cache.get(seasonId)?.list;
-  const {data: loaded, error} = useLoad(cached ? null : `episodes-${seasonId}`,
-    () => cachedEpisodes(cache, seriesId, seasonId));
+function Episodes({seriesId, seasonId, count, cache, version, next, onPlay}) {
+  const entry = cache.get(seasonId);
+  const cached = entry?.version === version ? entry.list : null;
+  const {data: loaded, error} = useLoad(cached ? null : `episodes-${seasonId}#${version}`,
+    () => cachedEpisodes(cache, seriesId, seasonId, version));
   const [picked, setPicked] = useState(null);
-  const episodes = cached ?? loaded;
+  const episodes = cached ?? loaded ?? entry?.list ?? entry?.stale;
   if (!episodes && !error) {
     return (
       <>
@@ -118,12 +124,14 @@ function playLabel(item, next) {
  * shown first is the card's; the full item from the server fills in the rest.
  */
 export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen, onPerson}) {
-  const {data: live, error: liveError} = useLoad(`item-${shown.id}`, () => loadItem(shown.id));
+  // Coming back from the player, the position it stopped at loads again: "Resume", the next episode.
+  const progress = useProgressVersion();
+  const {data: live, error: liveError} = useLoad(`item-${shown.id}`, () => loadItem(shown.id), progress);
   const item = live ? {...shown, ...live} : shown;
   const series = item.kind === 'tv';
   const {data: similar, error: similarError} = useLoad(`similar-${shown.id}`, () => loadSimilar(shown.id));
   const {data: seasons, error: seasonsError} = useLoad(series ? `seasons-${shown.id}` : null, () => loadSeasons(shown.id));
-  const {data: next} = useLoad(series ? `next-${shown.id}` : null, () => loadNextEpisode(shown.id));
+  const {data: next} = useLoad(series ? `next-${shown.id}` : null, () => loadNextEpisode(shown.id), progress);
   const [picked, setPicked] = useState(shown.initialSeasonId ?? null);
   const seasonId = picked ?? next?.seasonId ?? seasons?.[0]?.id ?? null;
   const episodeCache = useRef(new Map()).current;
@@ -172,7 +180,7 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
               <View className="gap-1">
                 <Pills options={seasons.map(season => ({id: season.id, label: clean(season.title)}))}
                   selected={seasonId} onSelect={setPicked} />
-                {seasonId && <Episodes key={seasonId} seriesId={shown.id} seasonId={seasonId} cache={episodeCache}
+                {seasonId && <Episodes key={seasonId} seriesId={shown.id} seasonId={seasonId} cache={episodeCache} version={progress}
                   count={seasons.find(season => season.id === seasonId)?.childCount} next={next} onPlay={onPlay} />}
               </View>
             )}

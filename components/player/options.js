@@ -72,7 +72,7 @@ function autoplaySection(autoplay, pick) {
 }
 
 /**
- * The panel's tabs. `pick` holds the handlers: audio, subtitles, version, quality, upscale and, for an
+ * The panel's tabs. `pick` holds the handlers: audio, subtitles, version, quality, upscale, compare and, for an
  * episode (`autoplay` set), autoplay ('default', 'on' or 'off').
  */
 export function optionTabs({playback, status, subtitleTrack, upscale, autoplay, pick}) {
@@ -95,6 +95,8 @@ export function optionTabs({playback, status, subtitleTrack, upscale, autoplay, 
     ]},
     {id: 'upscale', label: 'Upscaling', sections: [
       {title: 'UPSCALING · FOR ANIMATION', selected: upscale, onPick: pick.upscale, options: UPSCALE_OPTIONS, note: upscaleNote(status)},
+      {title: 'COMPARE', selected: null, onPick: pick.compare,
+        options: [{id: 'compare', label: 'Side by side', detail: 'Two models on one picture'}]},
     ]},
     ...(autoplay ? [{id: 'autoplay', label: 'Autoplay', sections: [autoplaySection(autoplay, pick)]}] : []),
     {id: 'info', label: 'Info', facts: facts(playback, status)},
