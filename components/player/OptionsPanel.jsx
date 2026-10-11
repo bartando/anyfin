@@ -1,5 +1,5 @@
 import {useEffect, useRef} from 'react';
-import {FocusScope, ScrollView, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
 import {CheckIcon} from '../Icons.jsx';
 
 const rowKey = (tab, section, id) => `opt:${tab}:${section}:${id}`;
@@ -19,7 +19,7 @@ function landing(tab) {
  * Circle closes it.
  */
 export function OptionsPanel({tabs, tab, onTab, onClose}) {
-  const {focus} = useFocus();
+  const {focus} = useFocusActions();
   const current = tabs.find(candidate => candidate.id === tab) ?? tabs[0];
   // Focus follows a tab switched with L1/R1 (and the first one shown), not one the D-pad walked onto.
   // L1/R1 focus the new tab first, which selects it: had the focused row just unmounted, focus would

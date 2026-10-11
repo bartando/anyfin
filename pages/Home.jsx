@@ -48,8 +48,8 @@ const HeroInfo = memo(function HeroInfo({item, onPlay, onMore, onFocus}) {
 
 // Memoized with a stable onPreview: every focus move scrolls the page (a new scrollY), which must not
 // re-render every card.
-const Row = memo(function Row({row, index, onOpen, onPreview}) {
-  const onFocus = useCallback(item => onPreview(item, index), [onPreview, index]);
+const Row = memo(function Row({row, onOpen, onPreview}) {
+  const onFocus = useCallback(item => onPreview(item, row.id), [onPreview, row.id]);
   return (
     <View style={{height: px(ROW_H)}}>
       <Text className="font-semi text-lg text-white px-12">{row.title}</Text>
@@ -77,8 +77,14 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY}) {
   const featured = picked ?? heroItems[0] ?? null;
   const [rotating, setRotating] = useState(true);
   const pending = useRef(null);
-  const rowCount = useRef(0);
-  rowCount.current = rows.length;
+  const latestRows = useRef(rows);
+  latestRows.current = rows;
+  // The row focus is in, by id: rows that come or go above it (a favorite toggled) move it.
+  const focusedRow = useRef(null);
+  const scrollTo = rowId => {
+    const at = latestRows.current.findIndex(row => row.id === rowId);
+    if (at >= 0) onScrollY(rowOffset(at, latestRows.current.length));
+  };
 
   useEffect(() => {
     if (!rotating || !active || heroItems.length < 2) return undefined;
@@ -92,14 +98,20 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY}) {
   useEffect(() => {
     if (!active) clearTimeout(pending.current);
   }, [active]);
+  // Only while scrolled into the rows: a tab focused scrolls the page back up without leaving a row.
+  useEffect(() => {
+    if (focusedRow.current && scrollY > 0) scrollTo(focusedRow.current);
+  }, [rows.map(row => row.id).join('|')]);
 
-  const preview = useCallback((item, rowIndex) => {
-    onScrollY(rowOffset(rowIndex, rowCount.current));
+  const preview = useCallback((item, rowId) => {
+    focusedRow.current = rowId;
+    scrollTo(rowId);
     setRotating(false);
     clearTimeout(pending.current);
     pending.current = setTimeout(() => setFeatured(item), PREVIEW_DELAY_MS);
   }, []);
   const heroFocus = useCallback(() => {
+    focusedRow.current = null;
     onScrollY(0);
     clearTimeout(pending.current);
     setRotating(true);
@@ -126,9 +138,7 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY}) {
         <View style={{height: px(HERO_H)}}>
           <HeroInfo item={featured} onPlay={onPlay} onMore={onOpen} onFocus={heroFocus} />
         </View>
-        {rows.map((row, index) => (
-          <Row key={row.id} row={row} index={index} onOpen={onOpen} onPreview={preview} />
-        ))}
+        {rows.map(row => <Row key={row.id} row={row} onOpen={onOpen} onPreview={preview} />)}
       </motion.View>
     </View>
   );

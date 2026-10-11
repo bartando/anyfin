@@ -1,11 +1,11 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocus}
+import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocusActions}
   from '@ps5-react/core';
 import {useInterfaceSounds} from './sounds.js';
 import {useMoveTracking} from './lib/lastMove.js';
 import {LaunchIntro} from './components/LaunchIntro.jsx';
 import {useSession} from './lib/jellyfin/session.js';
-import {LIBRARIES, hideFromResume, loadHome} from './lib/jellyfin/library.js';
+import {LIBRARIES, hideFromResume, loadFavoriteRows, loadHome} from './lib/jellyfin/library.js';
 import {useLoad} from './lib/useLoad.js';
 import {getFlag, toggleFavorite, togglePlayed, useFavoritesVersion} from './lib/favorites.js';
 import {focusedCard} from './lib/focusedCard.js';
@@ -31,6 +31,8 @@ const tabKey = tab => (tab === FAVORITES ? 'tab:Favorites' : `tab:${LABELS[tab]}
 // Home last had focused further down (that jumped the page back down).
 const DOWN_TO = {Home: 'hero-play', Search: 'key:A'};
 const TOAST_MS = 2200;
+// Home's favorite rows go after these.
+const BEFORE_FAVORITES = new Set(['resume', 'next-up']);
 const collectionFacts = collection => (collection.childCount ? `${collection.childCount} titles` : '');
 
 // Pages only translate (ANIMATION.md "Page transitions"): fading a full-screen node is the most
@@ -83,12 +85,21 @@ function Main({session, active}) {
   const [homeY, setHomeY] = useState(0);
   const favoritesVersion = useFavoritesVersion();
   const {data: loaded, error: homeError} = useLoad(session.token, loadHome);
+  // The rows a toggled favorite reloads stay up meanwhile, so the rows under them do not jump.
+  const {data: favoritesLoaded} = useLoad(`${session.token}#${favoritesVersion}`, loadFavoriteRows);
+  const lastFavorites = useRef([]);
+  if (favoritesLoaded) lastFavorites.current = favoritesLoaded;
+  const favoriteRows = lastFavorites.current;
   // Titles taken off Continue Watching leave the row at once; Home loads its rows only once.
   const [unresumed, setUnresumed] = useState(() => new Set());
-  const home = useMemo(() => (loaded && unresumed.size ? {...loaded, rows: loaded.rows
-    .map(row => (row.id === 'resume' ? {...row, items: row.items.filter(item => !unresumed.has(item.id))} : row))
-    .filter(row => row.items.length)} : loaded), [loaded, unresumed]);
-  const {focus, focusedRect} = useFocus();
+  const home = useMemo(() => {
+    if (!loaded) return loaded;
+    const at = loaded.rows.findLastIndex(row => BEFORE_FAVORITES.has(row.id)) + 1;
+    const rows = [...loaded.rows.slice(0, at), ...favoriteRows, ...loaded.rows.slice(at)]
+      .map(row => (row.id === 'resume' ? {...row, items: row.items.filter(item => !unresumed.has(item.id))} : row));
+    return {...loaded, rows: rows.filter(row => row.items.length)};
+  }, [loaded, favoriteRows, unresumed]);
+  const {focus, focusedRect} = useFocusActions();
   const [menu, setMenu] = useState(null);
   const started = useRef(false);
 
@@ -182,7 +193,9 @@ function Main({session, active}) {
       <View className="w-screen h-screen bg-canvas">
         <FocusScope onAction={onAction} inert={stack.length > 0}>
           <View className="absolute inset-0">
-            <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus('tabs')} preload>
+            {/* Circle goes to the tab on show: the bar remembers none before one was focused, and its
+                first is the Favorites heart, which would switch the page. */}
+            <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus(tabKey(tab))} preload>
               <Screen id={0}>
                 <HomePage home={home} onOpen={open} onPlay={play} scrollY={homeY} onScrollY={setHomeY} />
               </Screen>
