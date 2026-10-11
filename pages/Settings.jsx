@@ -60,8 +60,14 @@ function Playback({settings, left}) {
         about="Above this the server converts the film to a smaller stream."
         options={BITRATES} value={settings.maxBitrate} onChange={v => setSetting('maxBitrate', v)} />
       <ChoiceRow focusKey="set:seek" label="Skip with L2 and R2" nextFocusLeft={left}
-        about="L1 and R1 always skip a minute."
+        about="A tap skips this far; held, they scrub, faster the deeper they go. L1 and R1 always skip a minute."
         options={SEEK_STEPS} value={settings.seekStep} onChange={v => setSetting('seekStep', v)} />
+      <ToggleRow focusKey="set:triggers" label="Trigger feedback" nextFocusLeft={left}
+        about="L2 and R2 stiffen past the point where scrubbing speeds up."
+        value={settings.triggerFeedback} onChange={v => setSetting('triggerFeedback', v)} />
+      <ToggleRow focusKey="set:autoplay" label="Autoplay next episode" nextFocusLeft={left}
+        about="As the credits roll, after a short countdown. A series can differ: set it in the player's options."
+        value={settings.autoplay} onChange={v => setSetting('autoplay', v)} />
     </>
   );
 }

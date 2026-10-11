@@ -62,8 +62,20 @@ function facts(playback, status) {
   ];
 }
 
-/** The panel's tabs. `pick` holds the handlers: audio, subtitles, version, quality, upscale. */
-export function optionTabs({playback, status, subtitleTrack, upscale, pick}) {
+// An episode's series can autoplay differently from Settings.
+function autoplaySection(autoplay, pick) {
+  const id = autoplay.series === undefined ? 'default' : autoplay.series ? 'on' : 'off';
+  return {title: 'AUTOPLAY NEXT EPISODE · THIS SERIES', selected: id, onPick: pick.autoplay, options: [
+    {id: 'default', label: 'Default', detail: `${getSettings().autoplay ? 'On' : 'Off'}, from Settings`},
+    {id: 'on', label: 'On'}, {id: 'off', label: 'Off'},
+  ], note: 'On, the next episode starts a few seconds into the credits. Remembered for this series.'};
+}
+
+/**
+ * The panel's tabs. `pick` holds the handlers: audio, subtitles, version, quality, upscale and, for an
+ * episode (`autoplay` set), autoplay ('default', 'on' or 'off').
+ */
+export function optionTabs({playback, status, subtitleTrack, upscale, autoplay, pick}) {
   return [
     {id: 'tracks', label: 'Audio & Subtitles', columns: true, sections: [
       {title: 'AUDIO', options: (status?.audioTracks ?? []).map((track, at) => audioOption(playback, track, at)), selected: status?.audioTrack, onPick: pick.audio},
@@ -84,6 +96,7 @@ export function optionTabs({playback, status, subtitleTrack, upscale, pick}) {
     {id: 'upscale', label: 'Upscaling', sections: [
       {title: 'UPSCALING · FOR ANIMATION', selected: upscale, onPick: pick.upscale, options: UPSCALE_OPTIONS, note: upscaleNote(status)},
     ]},
+    ...(autoplay ? [{id: 'autoplay', label: 'Autoplay', sections: [autoplaySection(autoplay, pick)]}] : []),
     {id: 'info', label: 'Info', facts: facts(playback, status)},
   ];
 }

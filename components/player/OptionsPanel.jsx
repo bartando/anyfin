@@ -44,7 +44,7 @@ export function OptionsPanel({tabs, tab, onTab, onClose}) {
   return (
     <FocusScope trap onBack={() => { onClose(); return true; }} onAction={onAction}>
       <View className="absolute right-0 top-0 bottom-0 w-[620px] bg-canvas px-10 pt-10 pb-8">
-        <View className="flex-row items-center gap-2 mb-7">
+        <View className="flex-row items-center gap-1 mb-7">
           <Hint>L1</Hint>
           {tabs.map(candidate => (
             <Tab key={candidate.id} id={candidate.id} label={candidate.label} selected={candidate === current}
@@ -85,7 +85,7 @@ function Hint({children}) {
 function Tab({id, label, selected, onFocus}) {
   return (
     <View focusKey={tabKey(id)} focusable onFocus={onFocus}
-      className={`h-[36px] px-4 rounded-full justify-center ${selected ? 'bg-white/15' : ''} focused:bg-white`}>
+      className={`h-[36px] px-3 rounded-full justify-center ${selected ? 'bg-white/15' : ''} focused:bg-white`}>
       <TabLabel selected={selected}>{label}</TabLabel>
     </View>
   );
