@@ -12,6 +12,7 @@ import {Scrubber} from '../components/player/Scrubber.jsx';
 import {OptionsPanel} from '../components/player/OptionsPanel.jsx';
 import {SkipPrompt} from '../components/player/SkipPrompt.jsx';
 import {UpNext} from '../components/player/UpNext.jsx';
+import {CompareOverlay, cycleUpscaler, pictureSpan} from '../components/player/Compare.jsx';
 import {optionTabs} from '../components/player/options.js';
 import {usePadButton} from '../components/player/usePadButton.js';
 import {useTriggerSeek} from '../components/player/useTriggerSeek.js';
@@ -26,6 +27,8 @@ const PROGRESS_REPORT_MS = 10000;
 const SEEK_SETTLE_MS = 650;
 const STREAK_MS = 450;
 const seekStep = streak => (streak < 4 ? 10 : streak < 12 ? 30 : 60);
+// Left/Right move the compare line this share of the picture, more once held.
+const splitStep = streak => (streak < 3 ? 0.01 : streak < 10 ? 0.025 : 0.05);
 // After a seek the player keeps reporting the old position for a moment, even past its seek event:
 // the bar holds the target until a reading near it arrives, or for SEEK_LAND_MS when a keyframe
 // lands the seek short of it.
@@ -70,6 +73,10 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   const [pending, setPending] = useState(null);
   const [rate, setRate] = useState(0);
   const [seriesAutoplay, setSeriesAutoplay] = useState(() => autoplayFor(item));
+  // Upscalers side by side: {left, right, split, activity}; null when not comparing.
+  const [compare, setCompare] = useState(null);
+  const comparing = useRef(false);
+  comparing.current = !!compare;
   const position = useRef(0);
   const seekingTo = useRef(null);
   const reported = useRef(0);
@@ -121,7 +128,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   useEffect(wake, [paused]);
   const offered = useRef(false);
   useEffect(() => {
-    if (paused || error || panel || pending != null) return undefined;
+    if (paused || error || panel || pending != null || compare) return undefined;
     const id = setInterval(() => {
       if (!visible.current || Date.now() < hideAt.current) return;
       visible.current = false;
@@ -129,7 +136,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
       focus(offered.current ? 'player-upnext' : 'player-bar');
     }, 500);
     return () => clearInterval(id);
-  }, [paused, error, panel, pending]);
+  }, [paused, error, panel, pending, !!compare]);
 
   const seekTo = target => {
     const end = status.duration || Infinity;
@@ -182,10 +189,21 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     },
   });
 
+  const slide = useRef({streak: 0, last: 0});
+  const changeCompare = change => setCompare(was => was && {...was, ...change(was), activity: was.activity + 1});
+  const moveSplit = direction => {
+    const s = slide.current, now = Date.now();
+    s.streak = now - s.last < STREAK_MS ? s.streak + 1 : 0;
+    s.last = now;
+    changeCompare(was => ({split: Math.max(0, Math.min(1, was.split + direction * splitStep(s.streak)))}));
+  };
+
   useNavigationEvents(event => {
     if (!active) return;
-    if (event.type === 'blocked' && !panel && focused.current === 'player-bar' &&
-        (event.direction === 'left' || event.direction === 'right')) nudge(event.direction === 'left' ? -1 : 1);
+    const sideways = event.type === 'blocked' && (event.direction === 'left' || event.direction === 'right');
+    if (sideways && focused.current === 'player-compare') moveSplit(event.direction === 'left' ? -1 : 1);
+    else if (sideways && !panel && focused.current === 'player-bar') nudge(event.direction === 'left' ? -1 : 1);
+    else if (comparing.current) changeCompare(() => ({}));
     wake();
   });
 
@@ -220,9 +238,21 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   };
   const wasOpen = useRef(false);
   useEffect(() => {
-    if (wasOpen.current && !panel) focus('player-options');
+    if (wasOpen.current && !panel) focus(comparing.current ? 'player-compare' : 'player-options');
     wasOpen.current = !!panel;
   }, [panel]);
+
+  // From the panel, the film as it was (a still, as the panel paused it): the model playing on the
+  // left, Off or ArtCNN on the right. Leaving keeps the left one; Square keeps the right one.
+  const startCompare = () => {
+    setCompare({left: upscale, right: upscale ? '' : 'artcnn', split: 0.5, activity: 0});
+    setPanel(null);
+  };
+  const endCompare = keep => {
+    setCompare(null);
+    if (keep !== upscale) pick.upscale(keep);
+    focus('player-bar');
+  };
 
   const chooseSubtitles = track => {
     subtitleChosen.current = true;
@@ -240,6 +270,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
       setUpscale(model);
       rememberUpscaler(item, model);
     },
+    compare: startCompare,
     autoplay: id => {
       const on = id === 'default' ? undefined : id === 'on';
       setSeriesAutoplay(on);
@@ -268,6 +299,15 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   }, [offering]);
 
   const onAction = action => {
+    if (compare) {
+      if (action === 'l1') changeCompare(was => ({left: cycleUpscaler(was.left, 1)}));
+      else if (action === 'r1') changeCompare(was => ({right: cycleUpscaler(was.right, 1)}));
+      else if (action === 'triangle') changeCompare(was => ({left: was.right, right: was.left}));
+      else if (action === 'square') endCompare(compare.right);
+      // The triggers seek (useTriggerSeek); Options would open Settings over the comparison.
+      else if (!['l2', 'r2', 'options'].includes(action)) return false;
+      return true;
+    }
     if (action === 'l1') seekTo(position.current - 60);
     else if (action === 'r1') seekTo(position.current + 60);
     else if (action === 'l2' || action === 'r2') { /* useTriggerSeek takes the triggers from controller events */ }
@@ -278,7 +318,9 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     return true;
   };
   const onBack = () => {
-    if (offering) {
+    if (compare) {
+      endCompare(compare.left);
+    } else if (offering) {
       upNext.dismiss();
       focus('player-bar');
     } else if (!visible.current) wake();
@@ -287,7 +329,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   };
 
   const waiting = !error && (!playback || status.state === 'loading' || status.state === 'buffering');
-  const controls = shown || paused || !!error || !!panel;
+  const controls = !compare && (shown || paused || !!error || !!panel);
   const live = video.current?.getStatus();
 
   return (
@@ -295,7 +337,8 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
       <View className="w-screen h-screen bg-black">
         {playback && (
           <Video key={playback.url} ref={video} source={playback.url} paused={paused} startTime={playback.startSeconds}
-            upscale={upscale || false} audioDelay={settings.audioDelay} subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack}
+            upscale={(compare ? compare.left : upscale) || false}
+            compare={compare ? {upscale: compare.right || false, split: compare.split} : undefined} audioDelay={settings.audioDelay} subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack}
             onSubtitle={setSubtitle} className="absolute inset-0" onProgress={onProgress}
             onStatus={s => setStatus(was => ({...was, state: s.state}))}
             onEnd={upNext.finish} onError={({error: failed}) => setError(failed)} />
@@ -314,7 +357,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
             <Text className="font-semi text-lg text-white/80">{status.state === 'buffering' ? 'Buffering…' : 'Loading…'}</Text>
           </View>
         )}
-        {paused && !panel && !waiting && !error && (
+        {paused && !panel && !compare && !waiting && !error && (
           <View className="absolute inset-0 items-center justify-center">
             <View className="w-[96px] h-[96px] rounded-full bg-black/45 items-center justify-center">
               <PauseIcon size={40} color="#ffffff" />
@@ -338,7 +381,11 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
           <Scrubber position={status.position} duration={status.duration} buffered={status.buffered}
             pending={pending} rate={rate} onPress={togglePause} />
         </motion.View>
-        {(skip || offering) && (
+        {compare && (
+          <CompareOverlay left={compare.left} right={compare.right} split={compare.split} span={pictureSpan(live)}
+            paused={paused} activity={compare.activity} onPress={togglePause} />
+        )}
+        {(skip || offering) && !compare && (
           <View className={`absolute right-12 ${controls ? 'bottom-[316px]' : 'bottom-[48px]'}`}>
             {offering ? <UpNext next={next} seconds={upNext.seconds} onPlay={upNext.play} />
               : <SkipPrompt kind={skip.kind} onPress={skipNow} />}
