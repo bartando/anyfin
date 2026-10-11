@@ -182,7 +182,9 @@ function Main({session, active}) {
       <View className="w-screen h-screen bg-canvas">
         <FocusScope onAction={onAction} inert={stack.length > 0}>
           <View className="absolute inset-0">
-            <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus('tabs')} preload>
+            {/* Circle goes to the tab on show: the bar remembers none before one was focused, and its
+                first is the Favorites heart, which would switch the page. */}
+            <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus(tabKey(tab))} preload>
               <Screen id={0}>
                 <HomePage home={home} onOpen={open} onPlay={play} scrollY={homeY} onScrollY={setHomeY} />
               </Screen>
