@@ -4,6 +4,8 @@ import {px} from '../theme.js';
 import {clean} from '../lib/format.js';
 import {episodeCode} from '../lib/jellyfin/items.js';
 import {reportProgress, reportStart, reportStopped, startPlayback} from '../lib/jellyfin/playback.js';
+import {getSettings, setSetting, useSettings} from '../lib/settings.js';
+import {UPSCALERS, upscalerName} from '../lib/upscalers.js';
 import {Button} from '../components/Button.jsx';
 import {BackIcon, PlayIcon} from '../components/Icons.jsx';
 
@@ -25,6 +27,12 @@ const PauseIcon = ({size = 18, color = '#0b0b12'}) => (
   </View>
 );
 
+function SubtitleLine({size, children}) {
+  if (size === 'small') return <Text className="font-semi text-md text-white">{children}</Text>;
+  if (size === 'large') return <Text className="font-semi text-xl text-white">{children}</Text>;
+  return <Text className="font-semi text-lg text-white">{children}</Text>;
+}
+
 function title(item) {
   if (item.kind !== 'episode') return clean(item.title);
   return [item.seriesTitle, episodeCode(item), item.title].filter(Boolean).map(clean).join(' · ');
@@ -45,6 +53,7 @@ export function PlayerPage({item, active = true, onClose}) {
   const [shown, setShown] = useState(true);
   const [subtitle, setSubtitle] = useState('');
   const [subtitleTrack, setSubtitleTrack] = useState(-1);
+  const settings = useSettings();
   const hideAt = useRef(0);
   const {focus} = useFocus();
   useEffect(() => { focus('player-play'); }, []);
@@ -56,7 +65,7 @@ export function PlayerPage({item, active = true, onClose}) {
     startPlayback(item).then(found => {
       if (!live) return;
       setPlayback(found);
-      setSubtitleTrack(found.subtitles.preferred);
+      setSubtitleTrack(getSettings().subtitles === 'off' ? -1 : found.subtitles.preferred);
     }, failed => live && setError(failed.message));
     return () => { live = false; };
   }, [item.id]);
@@ -110,12 +119,16 @@ export function PlayerPage({item, active = true, onClose}) {
     const order = [-1, ...subtitleOptions.map(option => option.track)];
     setSubtitleTrack(current => order[(order.indexOf(current) + 1) % order.length]);
   };
+  const nextUpscaler = () => {
+    const at = UPSCALERS.findIndex(u => u.id === settings.upscaler);
+    setSetting('upscaler', UPSCALERS[(at + 1) % UPSCALERS.length].id);
+  };
   const subtitleLabel = subtitleOptions.find(option => option.track === subtitleTrack)?.label;
   const onAction = action => {
     if (action === 'l1') seekBy(-60);
     else if (action === 'r1') seekBy(60);
-    else if (action === 'l2') seekBy(-10);
-    else if (action === 'r2') seekBy(10);
+    else if (action === 'l2') seekBy(-settings.seekStep);
+    else if (action === 'r2') seekBy(settings.seekStep);
     else if (action === 'square') nextTrack();
     else if (action === 'triangle') nextSubtitles();
     else return false;
@@ -134,6 +147,7 @@ export function PlayerPage({item, active = true, onClose}) {
         {playback && (
           <Video ref={video} source={playback.url} paused={paused} startTime={playback.startSeconds}
             subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack} onSubtitle={setSubtitle}
+            upscale={settings.upscaler} audioDelay={settings.audioDelay}
             className="absolute inset-0" onProgress={onProgress}
             onLoad={({audioTracks}) => setTracks(audioTracks)}
             onStatus={s => setStatus(was => ({...was, state: s.state}))}
@@ -143,7 +157,7 @@ export function PlayerPage({item, active = true, onClose}) {
           <View className={`absolute left-0 right-0 items-center ${shown || paused ? 'bottom-[200px]' : 'bottom-[56px]'}`}>
             <View className="px-5 py-2 rounded-xl bg-black/55 items-center">
               {subtitle.split('\n').map((line, index) => (
-                <Text key={index} className="font-semi text-lg text-white">{line}</Text>
+                <SubtitleLine key={index} size={settings.subtitleSize}>{line}</SubtitleLine>
               ))}
             </View>
           </View>
@@ -173,7 +187,7 @@ export function PlayerPage({item, active = true, onClose}) {
           </View>
           <View className="flex-row items-center gap-4">
             <Button label="Back" icon={BackIcon} onPress={onClose} />
-            <Button label="–10 s" onPress={() => seekBy(-10)} />
+            <Button label={`–${settings.seekStep} s`} onPress={() => seekBy(-settings.seekStep)} />
             <Button label={paused ? 'Play' : 'Pause'} icon={paused ? PlayIcon : PauseIcon} primary focusKey="player-play"
               onPress={togglePause} />
             <Button label="+30 s" onPress={() => seekBy(30)} />
@@ -181,7 +195,8 @@ export function PlayerPage({item, active = true, onClose}) {
             {subtitleOptions.length > 0 && (
               <Button label={`Subtitles: ${subtitleLabel ?? 'Off'}`} onPress={nextSubtitles} />
             )}
-            <Text className="font-inter text-sm text-slate-300">L1/R1 one minute · L2/R2 ten seconds</Text>
+            <Button label={`Upscaling: ${upscalerName(settings.upscaler)}`} onPress={nextUpscaler} />
+            <Text className="font-inter text-sm text-slate-300">{`L1/R1 one minute · L2/R2 ${settings.seekStep} s`}</Text>
           </View>
         </motion.View>
       </View>

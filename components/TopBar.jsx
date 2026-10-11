@@ -1,9 +1,10 @@
 import {useEffect, useState} from 'react';
 import {FocusScope, Image, Text, View, motion, transitions, useIsFocused} from '@ps5-react/core';
 import {localNow} from '../lib/clock.js';
+import {useSettings} from '../lib/settings.js';
 import {sized} from '../lib/jellyfin/api.js';
 import {FocusRing} from './FocusRing.jsx';
-import {HeartFilledIcon, HeartIcon} from './Icons.jsx';
+import {GearIcon, HeartFilledIcon, HeartIcon} from './Icons.jsx';
 
 const TAB_W = 112;
 
@@ -42,8 +43,28 @@ function Clock() {
     const id = setTimeout(() => setNow(localNow()), now.msToNextMinute + 50);
     return () => clearTimeout(id);
   }, [now]);
-  const hh = String(now.hours).padStart(2, '0'), mm = String(now.minutes).padStart(2, '0');
-  return <Text className="font-semi text-lg text-white">{`${hh}:${mm}`}</Text>;
+  const {clock24} = useSettings();
+  const mm = String(now.minutes).padStart(2, '0');
+  if (!clock24) {
+    const h = now.hours % 12 || 12;
+    return <Text className="font-semi text-lg text-white">{`${h}:${mm} ${now.hours < 12 ? 'AM' : 'PM'}`}</Text>;
+  }
+  return <Text className="font-semi text-lg text-white">{`${String(now.hours).padStart(2, '0')}:${mm}`}</Text>;
+}
+
+function GearSlot() {
+  return <GearIcon size={20} color={useIsFocused() ? '#0b0b12' : '#ffffff'} />;
+}
+
+/** Opens the settings. */
+function SettingsButton({onPress}) {
+  return (
+    <View focusKey="settings" onPress={onPress}
+      className="size-10 rounded-full items-center justify-center bg-black/45 border border-white/10 focused:bg-white">
+      <GearSlot />
+      <AvatarRing />
+    </View>
+  );
 }
 
 function AvatarRing() {
@@ -67,7 +88,7 @@ function Avatar({user, onPress}) {
  * Wordmark, the centred tab pill and the clock/avatar. Tabs share one width so the active pill glides by
  * translation; focusing a tab selects it (docs/NAVIGATION.md "Tabs"). `y` scrolls it off with Home's content.
  */
-export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, user, onAccount}) {
+export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, user, onAccount, onSettings}) {
   return (
     <motion.View className="absolute left-0 right-0 top-0 h-[80px]" pointerEvents="box-none"
       initial={false} animate={{y: -y}} transition={transitions.screen}>
@@ -95,6 +116,7 @@ export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, u
         </View>
         <View className="absolute right-12 top-0 bottom-0 flex-row items-center gap-5" pointerEvents="box-none">
           <Clock />
+          <SettingsButton onPress={onSettings} />
           <Avatar user={user} onPress={onAccount} />
         </View>
       </FocusScope>
