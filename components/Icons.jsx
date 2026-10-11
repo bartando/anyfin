@@ -63,6 +63,18 @@ export const SquareGlyph = ({size = 12, color = '#ffffff'}) => (
   </Icon>
 );
 
+export const CircleGlyph = ({size = 12, color = '#ffffff'}) => (
+  <Icon size={size}><Circle cx="12" cy="12" r="7.5" fill="none" stroke={color} strokeWidth="2.4" /></Icon>
+);
+
+// The DualSense touchpad, seen from above: wide, its lower corners rounded off.
+export const TouchpadGlyph = ({size = 12, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M3 6.5h18v6.5a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 13z" fill="none" stroke={color} strokeWidth="2"
+      strokeLinejoin="round" />
+  </Icon>
+);
+
 export const BackIcon = ({size = 18, color = '#ffffff'}) => (
   <Icon size={size}>
     <Path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round"

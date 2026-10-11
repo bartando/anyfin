@@ -3,21 +3,22 @@ import {px} from '../../theme.js';
 import {clock} from '../../lib/format.js';
 import {PauseIcon, PlayIcon} from '../Icons.jsx';
 
-const THUMB = 14, THUMB_FOCUSED = 22, BUBBLE_W = 132;
+const THUMB = 14, THUMB_FOCUSED = 22, BUBBLE_W = 200;
 
 /**
  * The seek bar, the only focusable element in its row: Left and Right find nothing to move to, and
- * the player turns them into seeks. X pauses. `pending` is where a seek still being chosen lands.
+ * the player turns them into seeks. X pauses. `pending` is where a seek still being chosen lands;
+ * `rate`, while a trigger scrubs, how fast it moves there (film seconds a second).
  */
-export function Scrubber({position, duration, buffered, paused, pending, onPress}) {
+export function Scrubber({position, duration, buffered, paused, pending, rate, onPress}) {
   return (
     <View focusKey="player-bar" onPress={onPress} className="flex-row items-center gap-5 h-[56px]">
-      <Bar position={position} duration={duration} buffered={buffered} paused={paused} pending={pending} />
+      <Bar position={position} duration={duration} buffered={buffered} paused={paused} pending={pending} rate={rate} />
     </View>
   );
 }
 
-function Bar({position, duration, buffered, paused, pending}) {
+function Bar({position, duration, buffered, paused, pending, rate}) {
   const focused = useIsFocused();
   const shown = pending ?? position;
   const fraction = value => (duration > 0 ? Math.min(1, Math.max(0, value / duration)) : 0);
@@ -36,7 +37,9 @@ function Bar({position, duration, buffered, paused, pending}) {
         {pending != null && (
           <View className="absolute items-center" style={{left: at, bottom: px(20), width: px(BUBBLE_W), marginLeft: -px(BUBBLE_W / 2)}}>
             <View className="px-3 py-1 rounded-lg bg-white">
-              <Text className="font-semi text-md text-canvas">{signed(pending - position)}</Text>
+              <Text className="font-semi text-md text-canvas">
+                {signed(pending - position)}{rate > 0 ? `  ${Math.round(rate)}×` : ''}
+              </Text>
             </View>
           </View>
         )}
