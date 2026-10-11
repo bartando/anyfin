@@ -150,12 +150,12 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
                 ))}
               </View>
               <View className="flex-row gap-4 pt-2">
-                <Button label={playLabel(item, next)} icon={PlayIcon} primary onPress={() => onPlay(series && next ? next : item)} />
+                <Button label="Back" icon={BackIcon} onPress={onClose} />
+                <Button label={playLabel(item, next)} icon={PlayIcon} primary autoFocus onPress={() => onPlay(series && next ? next : item)} />
                 <Button label={favorite ? 'In Favorites' : 'Favorite'} icon={favorite ? HeartFilledIcon : HeartIcon}
                   onPress={() => toggleFavorite(item)} />
                 <Button label={played ? 'Watched' : 'Mark Watched'} icon={played ? CheckIcon : undefined}
                   onPress={() => togglePlayed(item)} />
-                <Button label="Back" icon={BackIcon} onPress={onClose} />
               </View>
             </View>
           </View>

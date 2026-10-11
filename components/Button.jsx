@@ -16,9 +16,9 @@ function Ring() {
 
 /** Glassy pill button: lighter for the primary action. Focus turns it solid white with the ring (no
  * scale: the ring would sit inside the transformed node and repaint all of it every frame). */
-export function Button({label, icon: Icon, primary = false, onPress, onFocus, focusKey, nextFocusUp}) {
+export function Button({label, icon: Icon, primary = false, autoFocus, onPress, onFocus, focusKey, nextFocusUp}) {
   return (
-    <View focusKey={focusKey} nextFocusUp={nextFocusUp} onPress={onPress} onFocus={onFocus}
+    <View autoFocus={autoFocus} focusKey={focusKey} nextFocusUp={nextFocusUp} onPress={onPress} onFocus={onFocus}
       className={`h-[48px] px-6 flex-row items-center gap-2 rounded-full border
         ${primary ? 'bg-white/85 border-white/60' : 'bg-white/15 border-white/25'}
         focused:bg-white focused:border-white`}>
