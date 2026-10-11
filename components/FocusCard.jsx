@@ -2,6 +2,7 @@ import {memo, useEffect, useState} from 'react';
 import {View, motion, transitions, useIsFocused} from '@ps5-react/core';
 import {FOCUS_LIFT, FOCUS_SCALE, RING_GAP, px} from '../theme.js';
 import {FocusRing} from './FocusRing.jsx';
+import {cardBlurred, cardFocused} from '../lib/focusedCard.js';
 
 const GLIMMER_EVERY_MS = 4000;
 // The band is a box three cards tall, clipped to the card: its corner-to-corner gradient puts a "/"
@@ -66,7 +67,8 @@ function Frame({w, h, radius, scale, children}) {
 export const FocusCard = memo(function FocusCard({w, h, radius, scale = FOCUS_SCALE, item, onPress, onFocus, onBlur,
   focusKey, children}) {
   return (
-    <motion.View focusKey={focusKey} onPress={() => onPress?.(item)} onFocus={() => onFocus?.(item)} onBlur={() => onBlur?.(item)}
+    <motion.View focusKey={focusKey} onPress={() => onPress?.(item)}
+      onFocus={() => { cardFocused(item); onFocus?.(item); }} onBlur={() => { cardBlurred(item); onBlur?.(item); }}
       whileFocus={{y: FOCUS_LIFT}} transition={transitions.focus}
       style={{width: px(w), height: px(h)}}>
       <Frame w={w} h={h} radius={radius} scale={scale}>{children}</Frame>

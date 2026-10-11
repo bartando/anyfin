@@ -10,6 +10,7 @@ import {CaptionedCard} from '../components/Cards.jsx';
 import {BackIcon} from '../components/Icons.jsx';
 import {PersonBubble} from '../components/People.jsx';
 import {Shelf} from '../components/Shelf.jsx';
+import {keepPageActions} from '../lib/pageActions.js';
 
 const PORTRAIT = {w: 200, h: 300};
 const INFO_H = 420;
@@ -32,7 +33,7 @@ export function PersonPage({person: shown, active = true, onClose, onOpen, onPer
   const profile = sized(person?.poster ?? shown.profile, SIZES.portrait);
   const backdropItem = person?.credits.find(item => item.backdrop);
   return (
-    <FocusScope trap={active} inert={!active} autoFocus onBack={() => { onClose(); return true; }} onAction={() => true}>
+    <FocusScope trap={active} inert={!active} autoFocus onBack={() => { onClose(); return true; }} onAction={keepPageActions}>
       <View className="w-screen h-screen bg-canvas">
         {backdropItem && <Backdrop item={backdropItem} />}
         <View pointerEvents="none" className="absolute inset-0 bg-canvas/75" />

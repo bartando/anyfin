@@ -131,3 +131,10 @@ export const GearIcon = ({size = 18, color = '#ffffff'}) => (
     <Circle cx="12" cy="12" r="3" fill="none" stroke={color} strokeWidth="1.9" />
   </Icon>
 );
+
+export const RestartIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M5.5 12a6.5 6.5 0 1 0 2-4.7" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <Path d="M4.5 4.5v4h4" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+  </Icon>
+);

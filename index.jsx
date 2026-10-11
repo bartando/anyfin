@@ -6,9 +6,11 @@ import {LaunchIntro} from './components/LaunchIntro.jsx';
 import {useSession} from './lib/jellyfin/session.js';
 import {LIBRARIES, loadHome} from './lib/jellyfin/library.js';
 import {useLoad} from './lib/useLoad.js';
-import {useFavoritesVersion} from './lib/favorites.js';
+import {getFlag, toggleFavorite, togglePlayed, useFavoritesVersion} from './lib/favorites.js';
+import {focusedCard} from './lib/focusedCard.js';
 import {FAVORITES, TopBar} from './components/TopBar.jsx';
 import {Toast} from './components/Toast.jsx';
+import {ContextMenu} from './components/ContextMenu.jsx';
 import {HomePage} from './pages/Home.jsx';
 import {LibraryPage} from './pages/Library.jsx';
 import {SearchPage} from './pages/Search.jsx';
@@ -79,7 +81,8 @@ function Main({session, active}) {
   const [homeY, setHomeY] = useState(0);
   const favoritesVersion = useFavoritesVersion();
   const {data: home, error: homeError} = useLoad(session.token, loadHome);
-  const {focus} = useFocus();
+  const {focus, focusedRect} = useFocus();
+  const [menu, setMenu] = useState(null);
   const started = useRef(false);
 
   useEffect(() => {
@@ -118,9 +121,29 @@ function Main({session, active}) {
     }
     push({type: 'player', item});
   }, []);
-  // Options opens Settings over whatever is showing (the player takes it first, for its own panel);
-  // pressed again in Settings, it closes them.
+  const say = text => setToast({id: Date.now(), text});
+  const pickFromMenu = (id, item) => {
+    setMenu(null);
+    if (id === 'play') play(item);
+    else if (id === 'restart') play({...item, positionSeconds: 0, positionMinutes: 0});
+    else if (id === 'info') openFavorite(item);
+    else if (id === 'watched') {
+      say(getFlag(item, 'played') ? 'Marked as unwatched' : 'Marked as watched');
+      togglePlayed(item);
+    } else if (id === 'favorite') {
+      say(getFlag(item, 'favorite') ? 'Removed from Favorites' : 'Added to Favorites');
+      toggleFavorite(item);
+    }
+  };
+  // Triangle on a card opens its menu beside it. Options opens Settings over whatever is showing (the
+  // player takes both first, for its own uses); pressed again in Settings, it closes them.
   const onOptions = action => {
+    if (action === 'triangle') {
+      const item = focusedCard(), rect = focusedRect();
+      if (!item || item.placeholder || !rect) return false;
+      setMenu({item, rect});
+      return true;
+    }
     if (action !== 'options') return false;
     setStack(pages => (pages.at(-1)?.type === 'settings' ? pages.slice(0, -1)
       : [...pages, {type: 'settings', section: 'playback', id: ++pageId.current}].slice(-STACK_MAX)));
@@ -186,6 +209,8 @@ function Main({session, active}) {
         <AnimatePresence>
           {toast && <Toast key={toast.id} text={toast.text} />}
         </AnimatePresence>
+        {/* No exit animation: a leaving trap would keep focus until it unmounted. */}
+        {menu && <ContextMenu item={menu.item} rect={menu.rect} onPick={pickFromMenu} onClose={() => setMenu(null)} />}
       </View>
     </FocusScope>
   );

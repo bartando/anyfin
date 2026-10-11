@@ -4,6 +4,7 @@ import {logOut} from '../lib/jellyfin/auth.js';
 import {setSetting, useSettings} from '../lib/settings.js';
 import {ActionRow, ChoiceRow, InfoRow, ToggleRow} from '../components/SettingRow.jsx';
 import {UpscalingPanel} from './Upscaling.jsx';
+import {keepPageActions} from '../lib/pageActions.js';
 
 // `first`: where Right from the section's tab lands.
 const SECTIONS = [
@@ -133,7 +134,7 @@ export function SettingsPage({session, section: initial = 'playback', active = t
   const left = `settings:${section}`;
   const shown = SECTIONS.find(s => s.id === section);
   return (
-    <FocusScope trap={active} inert={!active} onBack={() => { onClose(); return true; }} onAction={action => action !== 'options'}>
+    <FocusScope trap={active} inert={!active} onBack={() => { onClose(); return true; }} onAction={keepPageActions}>
       <View className="w-screen h-screen bg-canvas">
         <View pointerEvents="none" className="absolute inset-0 bg-gradient-to-br from-accent/20 via-canvas to-canvas" />
         <View className="absolute left-12 top-[56px] gap-1">

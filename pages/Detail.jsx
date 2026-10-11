@@ -15,6 +15,7 @@ import {MetaLine} from '../components/Meta.jsx';
 import {PersonBubble} from '../components/People.jsx';
 import {Shelf} from '../components/Shelf.jsx';
 import {CardsSkeleton, PeopleSkeleton, PillsSkeleton, PostersSkeleton} from '../components/Skeleton.jsx';
+import {keepPageActions} from '../lib/pageActions.js';
 
 // Engine coordinates are 16-bit: a row of 240 px cards overflows past about 42 of them, so a long
 // season (a soap, an anime) shows its episodes this many at a time.
@@ -129,7 +130,7 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
   const paragraphs = splitText(clampText(item.overview, 480));
   const cast = item.cast ?? [];
   return (
-    <FocusScope trap={active} inert={!active} autoFocus onBack={() => { onClose(); return true; }} onAction={() => true}>
+    <FocusScope trap={active} inert={!active} autoFocus onBack={() => { onClose(); return true; }} onAction={keepPageActions}>
       <View className="w-screen h-screen bg-canvas">
         <Backdrop item={item} />
         <View pointerEvents="none" className="absolute left-0 top-0 bottom-0 w-[960px]

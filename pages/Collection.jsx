@@ -8,6 +8,7 @@ import {Button} from '../components/Button.jsx';
 import {CaptionedCard} from '../components/Cards.jsx';
 import {BackIcon} from '../components/Icons.jsx';
 import {Shelf} from '../components/Shelf.jsx';
+import {keepPageActions} from '../lib/pageActions.js';
 
 const INFO_H = 440;
 
@@ -24,7 +25,7 @@ export function CollectionPage({collection, active = true, onClose, onOpen}) {
   const parts = data ?? [];
   const paragraphs = splitText(clampText(collection.overview ?? '', 420));
   return (
-    <FocusScope trap={active} inert={!active} autoFocus onBack={() => { onClose(); return true; }} onAction={() => true}>
+    <FocusScope trap={active} inert={!active} autoFocus onBack={() => { onClose(); return true; }} onAction={keepPageActions}>
       <View className="w-screen h-screen bg-canvas">
         {collection.backdrop && <Backdrop item={collection} />}
         <View pointerEvents="none" className="absolute left-0 top-0 bottom-0 w-[960px]
