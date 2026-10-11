@@ -16,8 +16,6 @@ import {PersonBubble} from '../components/People.jsx';
 import {Shelf} from '../components/Shelf.jsx';
 import {CardsSkeleton, PeopleSkeleton, PillsSkeleton, PostersSkeleton} from '../components/Skeleton.jsx';
 
-// The info block keeps the first shelf where it sat before the page scrolled: just above the bottom edge.
-const INFO_H = 486;
 // Engine coordinates are 16-bit: a row of 240 px cards overflows past about 42 of them, so a long
 // season (a soap, an anime) shows its episodes this many at a time.
 const EPISODES_SHOWN = 40;
@@ -139,8 +137,8 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
         <View pointerEvents="none" className="absolute left-0 right-0 bottom-0 h-[420px]
           bg-gradient-to-t from-canvas via-canvas/90 to-transparent" />
         <ScrollView className="absolute inset-0">
-          <View style={{height: px(INFO_H)}}>
-            <View className="absolute left-12 top-[48px] w-[640px] gap-3">
+          <View scrollAnchor className="px-12 pt-[48px] pb-10">
+            <View className="w-[640px] gap-3">
               <Logo item={item} w={420} h={110} />
               <MetaLine item={item} genres={3} />
               {item.tagline && <Text className="font-semi text-md text-accent-soft">{clean(item.tagline)}</Text>}
@@ -176,13 +174,13 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
             )}
             {!live && !liveError && <PeopleSkeleton title="Cast" count={PEOPLE_SHOWN} height={CAST_H} />}
             {cast.length > 0 && (
-              <Shelf title="Cast" height={CAST_H}>
+              <Shelf title="Cast" height={CAST_H} anchor>
                 {cast.map(person => <PersonBubble key={person.id} person={person} onPress={onPerson} />)}
               </Shelf>
             )}
             {!similar && !similarError && <PostersSkeleton title="More like this" count={POSTERS_SHOWN} height={SIMILAR_H} />}
             {similar?.length > 0 && (
-              <Shelf title="More like this" height={SIMILAR_H}>
+              <Shelf title="More like this" height={SIMILAR_H} anchor>
                 {similar.map(related => <CaptionedPoster key={related.key} item={related} onPress={onOpen} />)}
               </Shelf>
             )}
