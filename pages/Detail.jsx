@@ -1,4 +1,4 @@
-import {memo, useState} from 'react';
+import {memo, useRef, useState} from 'react';
 import {FocusScope, ScrollView, Text, View, useIsFocused} from '@ps5-react/core';
 import {px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
@@ -14,12 +14,30 @@ import {Logo} from '../components/Logo.jsx';
 import {MetaLine} from '../components/Meta.jsx';
 import {PersonBubble} from '../components/People.jsx';
 import {Shelf} from '../components/Shelf.jsx';
+import {CardsSkeleton, PeopleSkeleton, PillsSkeleton} from '../components/Skeleton.jsx';
 
 // The info block keeps the first shelf where it sat before the page scrolled: just above the bottom edge.
 const INFO_H = 486;
 // Engine coordinates are 16-bit: a row of 240 px cards overflows past about 42 of them, so a long
 // season (a soap, an anime) shows its episodes this many at a time.
 const EPISODES_SHOWN = 40;
+const EPISODES_H = px(206), CAST_H = px(176), SIMILAR_H = px(206);
+// Placeholder tiles: enough to run past the right edge.
+const CARDS_SHOWN = 6, PEOPLE_SHOWN = 9;
+
+/**
+ * A season's episodes, fetched once per detail page: the season pills select on focus, so moving
+ * along them would otherwise ask again for every season passed, including ones already shown.
+ */
+function cachedEpisodes(cache, seriesId, seasonId) {
+  if (!cache.has(seasonId)) {
+    const entry = {list: null};
+    entry.promise = loadEpisodes(seriesId, seasonId).then(list => (entry.list = list),
+      error => { cache.delete(seasonId); throw error; });
+    cache.set(seasonId, entry);
+  }
+  return cache.get(seasonId).promise;
+}
 
 function SeasonLabel({label, selected}) {
   const focused = useIsFocused();
@@ -48,10 +66,24 @@ const Pills = memo(function Pills({options, selected, onSelect}) {
   );
 });
 
-/** A season's episodes, EPISODES_SHOWN at a time, starting at the block that holds `next`. */
-function Episodes({seriesId, seasonId, next, onPlay}) {
-  const {data: episodes} = useLoad(`episodes-${seasonId}`, () => loadEpisodes(seriesId, seasonId));
+/**
+ * A season's episodes, EPISODES_SHOWN at a time, starting at the block that holds `next`. While they
+ * load, placeholders sized from the season's episode count hold their place.
+ */
+function Episodes({seriesId, seasonId, count, cache, next, onPlay}) {
+  const cached = cache.get(seasonId)?.list;
+  const {data: loaded, error} = useLoad(cached ? null : `episodes-${seasonId}`,
+    () => cachedEpisodes(cache, seriesId, seasonId));
   const [picked, setPicked] = useState(null);
+  const episodes = cached ?? loaded;
+  if (!episodes && !error) {
+    return (
+      <>
+        {count > EPISODES_SHOWN && <PillsSkeleton count={Math.ceil(count / EPISODES_SHOWN)} />}
+        <CardsSkeleton count={Math.min(count || CARDS_SHOWN, CARDS_SHOWN)} height={EPISODES_H} />
+      </>
+    );
+  }
   if (!episodes?.length) return null;
   const blocks = Math.ceil(episodes.length / EPISODES_SHOWN);
   const nextAt = next ? episodes.findIndex(episode => episode.id === next.id) : -1;
@@ -62,7 +94,7 @@ function Episodes({seriesId, seasonId, next, onPlay}) {
   return (
     <>
       {blocks > 1 && <Pills options={options} selected={block} onSelect={setPicked} />}
-      <Shelf height={px(206)}>
+      <Shelf height={EPISODES_H}>
         {shown.map(episode => (
           <CaptionedCard key={episode.key} item={episode} onPress={onPlay}
             title={`${episode.episode != null ? `${episode.episode}. ` : ''}${episode.title}`}
@@ -84,14 +116,15 @@ function playLabel(item, next) {
  * shown first is the card's; the full item from the server fills in the rest.
  */
 export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen, onPerson}) {
-  const {data: live} = useLoad(`item-${shown.id}`, () => loadItem(shown.id));
+  const {data: live, error: liveError} = useLoad(`item-${shown.id}`, () => loadItem(shown.id));
   const item = live ? {...shown, ...live} : shown;
   const series = item.kind === 'tv';
-  const {data: similar} = useLoad(`similar-${shown.id}`, () => loadSimilar(shown.id));
-  const {data: seasons} = useLoad(series ? `seasons-${shown.id}` : null, () => loadSeasons(shown.id));
+  const {data: similar, error: similarError} = useLoad(`similar-${shown.id}`, () => loadSimilar(shown.id));
+  const {data: seasons, error: seasonsError} = useLoad(series ? `seasons-${shown.id}` : null, () => loadSeasons(shown.id));
   const {data: next} = useLoad(series ? `next-${shown.id}` : null, () => loadNextEpisode(shown.id));
   const [picked, setPicked] = useState(shown.initialSeasonId ?? null);
   const seasonId = picked ?? next?.seasonId ?? seasons?.[0]?.id ?? null;
+  const episodeCache = useRef(new Map()).current;
   const favorite = useIsFavorite(item);
   const played = useIsPlayed(item);
   // About six lines fit above the first shelf; splitText keeps each node under the 255-byte cap.
@@ -127,20 +160,29 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
             </View>
           </View>
           <View className="gap-4 pb-12">
+            {series && !seasons && !seasonsError && (
+              <View className="gap-1">
+                <PillsSkeleton count={Math.min(item.seasons || 3, 8)} />
+                <CardsSkeleton count={CARDS_SHOWN} height={EPISODES_H} />
+              </View>
+            )}
             {series && seasons?.length > 0 && (
               <View className="gap-1">
                 <Pills options={seasons.map(season => ({id: season.id, label: clean(season.title)}))}
                   selected={seasonId} onSelect={setPicked} />
-                {seasonId && <Episodes key={seasonId} seriesId={shown.id} seasonId={seasonId} next={next} onPlay={onPlay} />}
+                {seasonId && <Episodes key={seasonId} seriesId={shown.id} seasonId={seasonId} cache={episodeCache}
+                  count={seasons.find(season => season.id === seasonId)?.childCount} next={next} onPlay={onPlay} />}
               </View>
             )}
+            {!live && !liveError && <PeopleSkeleton title="Cast" count={PEOPLE_SHOWN} height={CAST_H} />}
             {cast.length > 0 && (
-              <Shelf title="Cast" height={px(176)}>
+              <Shelf title="Cast" height={CAST_H}>
                 {cast.map(person => <PersonBubble key={person.id} person={person} onPress={onPerson} />)}
               </Shelf>
             )}
+            {!similar && !similarError && <CardsSkeleton title="More like this" count={CARDS_SHOWN} height={SIMILAR_H} />}
             {similar?.length > 0 && (
-              <Shelf title="More like this" height={px(206)}>
+              <Shelf title="More like this" height={SIMILAR_H}>
                 {similar.map(related => <CaptionedCard key={related.key} item={related} onPress={onOpen} />)}
               </Shelf>
             )}
