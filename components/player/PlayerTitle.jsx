@@ -8,8 +8,8 @@ import {Logo} from '../Logo.jsx';
 
 /**
  * The title's logo (the series' for an episode, text without one) and a line under it: the episode's
- * code and name, or a film's year and runtime, then when it ends. The logo is drawn white: over a dark
- * scene a black one vanished. It steps back while a seek is being chosen, and the gap under it holds
+ * code and name, or a film's year and runtime, then when it ends. A logo with no vivid colour is drawn
+ * white: over a dark scene a black one vanished. It steps back while a seek is being chosen, and the gap under it holds
  * the seek's time.
  */
 export function PlayerTitle({item, position, duration, dim}) {
@@ -19,7 +19,7 @@ export function PlayerTitle({item, position, duration, dim}) {
   const line = [...parts, ends && `Ends at ${ends}`].filter(Boolean).join(' · ');
   return (
     <motion.View className="mb-[60px]" animate={{opacity: dim ? 0.35 : 1}} transition={transitions.panel}>
-      <Logo item={item} title={episode ? item.seriesTitle ?? item.title : item.title} w={420} h={110} tint="#ffffff" />
+      <Logo item={item} title={episode ? item.seriesTitle ?? item.title : item.title} w={420} h={110} tintDull="#ffffff" />
       {!!line && <Text className="font-semi text-md text-white/70 mt-3 truncate">{line}</Text>}
     </motion.View>
   );
