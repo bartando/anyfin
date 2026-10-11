@@ -16,10 +16,10 @@ export function PlayerHeader({item, onBack, onOptions, onNext}) {
         <IconButton focusKey="player-options" icon={SubtitlesIcon} label="Audio & Subtitles" onPress={onOptions} />
         {onNext && <IconButton focusKey="player-next" icon={NextEpisodeIcon} label="Next Episode" onPress={onNext} />}
       </View>
-      <View className="items-end pt-1">
-        <Text className="font-semi text-xl text-white">{clean(episode ? item.seriesTitle ?? item.title : item.title)}</Text>
+      <View className="w-[640px] items-end pt-1">
+        <Text className="font-semi text-xl text-white text-right truncate">{clean(episode ? item.seriesTitle ?? item.title : item.title)}</Text>
         {episode && (
-          <Text className="font-inter text-md text-white/75">
+          <Text className="font-inter text-md text-white/75 text-right truncate">
             {[episodeCode(item), clean(item.title)].filter(Boolean).join(' · ')}
           </Text>
         )}

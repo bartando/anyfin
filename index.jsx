@@ -140,10 +140,10 @@ function Main({session, active}) {
         return next;
       });
       keep(true);
-      say('Removed from Continue Watching');
+      say('Progress cleared');
       hideFromResume(item.id).catch(error => {
         keep(false);
-        say(`Could not remove it: ${error.message}`);
+        say(`Could not clear the progress: ${error.message}`);
       });
     }
     else if (id === 'watched') {

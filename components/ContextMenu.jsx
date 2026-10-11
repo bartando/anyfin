@@ -7,7 +7,7 @@ import {CheckIcon, CloseIcon, HeartFilledIcon, HeartIcon, InfoIcon, PlayIcon, Re
 
 // Logical px. The height is worked out from the rows, so the menu can be placed before it lays out; a
 // title longer than TITLE_CHARS takes a second line.
-const W = 300, GAP = 20, MARGIN = 32, HEADER = 62, TITLE_LINE = 27, TITLE_CHARS = 24, ROW = 48, PAD = 8;
+const W = 360, GAP = 20, MARGIN = 32, HEADER = 62, TITLE_LINE = 27, TITLE_CHARS = 24, ROW = 48, PAD = 8;
 
 // An episode opens its series at its season.
 function goTo(item) {
@@ -24,7 +24,7 @@ function entries(item, played, favorite) {
     list.push({id: 'play', label: resume ? `Resume ${item.positionMinutes} min` : 'Play', icon: PlayIcon});
     if (resume) list.push({id: 'restart', label: 'Play from the start', icon: RestartIcon});
   }
-  if (!played && item.positionSeconds > 0) list.push({id: 'unresume', label: 'Remove from Continue Watching', icon: CloseIcon});
+  if (!played && item.positionSeconds > 0) list.push({id: 'unresume', label: 'Clear progress', icon: CloseIcon});
   if (item.kind !== 'collection') list.push({id: 'watched', label: played ? 'Mark as unwatched' : 'Mark as watched', icon: CheckIcon});
   list.push({id: 'favorite', label: favorite ? 'Remove from Favorites' : 'Add to Favorites',
     icon: favorite ? HeartFilledIcon : HeartIcon});
@@ -74,7 +74,7 @@ function Entry({entry: {icon: Icon, label}}) {
   return (
     <>
       <Icon size={18} color={focused ? '#0b0b12' : '#ffffff'} />
-      <Text focused={focused} className="font-semi text-md text-white focused:text-canvas">{label}</Text>
+      <Text focused={focused} className="flex-1 font-semi text-md text-white focused:text-canvas truncate">{label}</Text>
     </>
   );
 }

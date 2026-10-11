@@ -49,7 +49,7 @@ export function PersonPage({person: shown, active = true, onClose, onOpen, onPer
                 )}
               </View>
               <View className="w-[760px] gap-3 pt-2">
-                <Text className="font-semi text-xl text-white">{clean(name)}</Text>
+                <Text className="font-semi text-xl text-white line-clamp-2">{clean(name)}</Text>
                 {person && facts(person) && <Text className="font-inter text-sm text-accent-soft">{facts(person)}</Text>}
                 <View className="gap-2">
                   {paragraphs.map((text, index) => (

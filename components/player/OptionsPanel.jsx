@@ -126,12 +126,11 @@ function RowBody({option, selected}) {
   return (
     <>
       <View className="w-[18px]">{selected && <CheckIcon size={16} color={focused ? '#7b6dff' : '#a9a0ff'} />}</View>
-      <Text focused={focused} className={`font-semi text-md ${selected ? 'text-white' : 'text-white/75'} focused:text-canvas`}>
+      <Text focused={focused} className={`flex-1 font-semi text-md ${selected ? 'text-white' : 'text-white/75'} focused:text-canvas truncate`}>
         {option.label}
       </Text>
-      <View className="flex-1" />
       {!!option.detail && (
-        <Text focused={focused} className="font-inter text-sm text-white/45 focused:text-canvas/60">{option.detail}</Text>
+        <Text focused={focused} className="max-w-[160px] font-inter text-sm text-white/45 focused:text-canvas/60 truncate">{option.detail}</Text>
       )}
     </>
   );
