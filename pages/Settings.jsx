@@ -133,7 +133,7 @@ export function SettingsPage({session, section: initial = 'playback', active = t
   const left = `settings:${section}`;
   const shown = SECTIONS.find(s => s.id === section);
   return (
-    <FocusScope trap={active} inert={!active} onBack={() => { onClose(); return true; }} onAction={() => true}>
+    <FocusScope trap={active} inert={!active} onBack={() => { onClose(); return true; }} onAction={action => action !== 'options'}>
       <View className="w-screen h-screen bg-canvas">
         <View pointerEvents="none" className="absolute inset-0 bg-gradient-to-br from-accent/20 via-canvas to-canvas" />
         <View className="absolute left-12 top-[56px] gap-1">

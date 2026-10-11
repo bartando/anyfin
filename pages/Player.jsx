@@ -31,7 +31,7 @@ function SubtitleLine({size, children}) {
 
 /**
  * The film, full screen. The bar is where focus rests: Left and Right seek, X pauses, Up reaches Back,
- * Audio & Subtitles and Next Episode. The options panel (Square) has the tracks, the version
+ * Audio & Subtitles and Next Episode. The options panel (Square or Options) has the tracks, the version
  * and quality, the upscaler and what is playing. L1/R1 jump a minute, L2/R2 the step from Settings,
  * Triangle cycles the subtitles. Circle first brings the hidden controls back, then leaves. The position
  * goes to the server as it plays, so Continue Watching and other devices pick up where this one stopped.
@@ -202,6 +202,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     else if (action === 'r2') seekTo(position.current + settings.seekStep);
     else if (action === 'triangle') chooseSubtitles(subtitleOrder[(subtitleOrder.indexOf(subtitleTrack) + 1) % subtitleOrder.length]);
     else if (action === 'square') openPanel();
+    else if (action === 'options') (panel ? closePanel() : openPanel());
     else return false;
     return true;
   };

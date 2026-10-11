@@ -118,6 +118,14 @@ function Main({session, active}) {
     }
     push({type: 'player', item});
   }, []);
+  // Options opens Settings over whatever is showing (the player takes it first, for its own panel);
+  // pressed again in Settings, it closes them.
+  const onOptions = action => {
+    if (action !== 'options') return false;
+    setStack(pages => (pages.at(-1)?.type === 'settings' ? pages.slice(0, -1)
+      : [...pages, {type: 'settings', section: 'playback', id: ++pageId.current}].slice(-STACK_MAX)));
+    return true;
+  };
   const onAction = action => {
     if (action !== 'l1' && action !== 'r1') return false;
     const at = TAB_ORDER.indexOf(tab);
@@ -126,58 +134,60 @@ function Main({session, active}) {
   };
 
   return (
-    <View className="w-screen h-screen bg-canvas">
-      <FocusScope onAction={onAction} inert={stack.length > 0}>
-        <View className="absolute inset-0">
-          <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus('tabs')} preload>
-            <Screen id={0}>
-              <HomePage home={home} onOpen={open} onPlay={play} scrollY={homeY} onScrollY={setHomeY} />
-            </Screen>
-            <Screen id={1}><LibraryPage title="Movies" params={LIBRARIES.movies} onOpen={open} alphabetical /></Screen>
-            <Screen id={2}><LibraryPage title="TV Shows" params={LIBRARIES.shows} onOpen={open} unit="SHOW" alphabetical /></Screen>
-            <Screen id={3}>
-              <LibraryPage title="Collections" params={LIBRARIES.collections} onOpen={openCollection} facts={collectionFacts}
-                unit="COLLECTION" empty="This server has no collections." />
-            </Screen>
-            <Screen id={4}><SearchPage onOpen={open} onPlay={play} /></Screen>
-            <Screen id={FAVORITES}>
-              <LibraryPage title="Favorites" params={LIBRARIES.favorites} version={favoritesVersion} onOpen={openFavorite}
-                empty="Nothing here yet. Open a title and press the heart to keep it here." />
-            </Screen>
-          </Screens>
-          <TopBar labels={LABELS} active={tab} onSelect={select} onEnter={() => focus('content')}
-            downTo={DOWN_TO} y={tab === 0 ? homeY : 0} onAccount={() => openSettings('account')}
-            onSettings={() => openSettings('playback')}
-            user={{name: session.userName, image: session.userImage}} />
-        </View>
-      </FocusScope>
-      <AnimatePresence>
-        {stack.slice(-2).map((page, index, shown) => {
-          const top = index === shown.length - 1;
-          return (
-            <motion.View key={page.id} className="absolute inset-0" variants={sheet}
-              initial={top ? 'hidden' : false} animate="shown" exit={top ? 'gone' : 'drop'}>
-              {page.type === 'title' ? (
-                <DetailPage item={page.item} active={top} onClose={back} onPlay={play} onOpen={open}
-                  onPerson={openPerson} />
-              ) : page.type === 'person' ? (
-                <PersonPage person={page.person} active={top} onClose={back} onOpen={open} onPerson={openPerson} />
-              ) : page.type === 'player' ? (
-                <PlayerPage item={page.item} active={top} onClose={back} onNext={playNext} />
-              ) : page.type === 'settings' ? (
-                <SettingsPage session={session} section={page.section} active={top} onClose={back} />
-              ) : (
-                <CollectionPage collection={page.collection} active={top} onClose={back} onOpen={open} />
-              )}
-            </motion.View>
-          );
-        })}
-      </AnimatePresence>
-      {homeError && <Toast key="home-error" text={`Could not load Home: ${homeError.message}`} />}
-      <AnimatePresence>
-        {toast && <Toast key={toast.id} text={toast.text} />}
-      </AnimatePresence>
-    </View>
+    <FocusScope onAction={onOptions}>
+      <View className="w-screen h-screen bg-canvas">
+        <FocusScope onAction={onAction} inert={stack.length > 0}>
+          <View className="absolute inset-0">
+            <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus('tabs')} preload>
+              <Screen id={0}>
+                <HomePage home={home} onOpen={open} onPlay={play} scrollY={homeY} onScrollY={setHomeY} />
+              </Screen>
+              <Screen id={1}><LibraryPage title="Movies" params={LIBRARIES.movies} onOpen={open} alphabetical /></Screen>
+              <Screen id={2}><LibraryPage title="TV Shows" params={LIBRARIES.shows} onOpen={open} unit="SHOW" alphabetical /></Screen>
+              <Screen id={3}>
+                <LibraryPage title="Collections" params={LIBRARIES.collections} onOpen={openCollection} facts={collectionFacts}
+                  unit="COLLECTION" empty="This server has no collections." />
+              </Screen>
+              <Screen id={4}><SearchPage onOpen={open} onPlay={play} /></Screen>
+              <Screen id={FAVORITES}>
+                <LibraryPage title="Favorites" params={LIBRARIES.favorites} version={favoritesVersion} onOpen={openFavorite}
+                  empty="Nothing here yet. Open a title and press the heart to keep it here." />
+              </Screen>
+            </Screens>
+            <TopBar labels={LABELS} active={tab} onSelect={select} onEnter={() => focus('content')}
+              downTo={DOWN_TO} y={tab === 0 ? homeY : 0} onAccount={() => openSettings('account')}
+              onSettings={() => openSettings('playback')}
+              user={{name: session.userName, image: session.userImage}} />
+          </View>
+        </FocusScope>
+        <AnimatePresence>
+          {stack.slice(-2).map((page, index, shown) => {
+            const top = index === shown.length - 1;
+            return (
+              <motion.View key={page.id} className="absolute inset-0" variants={sheet}
+                initial={top ? 'hidden' : false} animate="shown" exit={top ? 'gone' : 'drop'}>
+                {page.type === 'title' ? (
+                  <DetailPage item={page.item} active={top} onClose={back} onPlay={play} onOpen={open}
+                    onPerson={openPerson} />
+                ) : page.type === 'person' ? (
+                  <PersonPage person={page.person} active={top} onClose={back} onOpen={open} onPerson={openPerson} />
+                ) : page.type === 'player' ? (
+                  <PlayerPage item={page.item} active={top} onClose={back} onNext={playNext} />
+                ) : page.type === 'settings' ? (
+                  <SettingsPage session={session} section={page.section} active={top} onClose={back} />
+                ) : (
+                  <CollectionPage collection={page.collection} active={top} onClose={back} onOpen={open} />
+                )}
+              </motion.View>
+            );
+          })}
+        </AnimatePresence>
+        {homeError && <Toast key="home-error" text={`Could not load Home: ${homeError.message}`} />}
+        <AnimatePresence>
+          {toast && <Toast key={toast.id} text={toast.text} />}
+        </AnimatePresence>
+      </View>
+    </FocusScope>
   );
 }
 
