@@ -6,6 +6,7 @@ import {skippable} from '../lib/jellyfin/markers.js';
 import {autoplayFor, rememberAutoplay, rememberUpscaler, upscalerFor} from '../lib/playerPrefs.js';
 import {getSettings, useSettings} from '../lib/settings.js';
 import {PlayerHeader} from '../components/player/PlayerHeader.jsx';
+import {PlayerTitle} from '../components/player/PlayerTitle.jsx';
 import {Scrubber} from '../components/player/Scrubber.jsx';
 import {OptionsPanel} from '../components/player/OptionsPanel.jsx';
 import {SkipPrompt} from '../components/player/SkipPrompt.jsx';
@@ -14,6 +15,7 @@ import {optionTabs} from '../components/player/options.js';
 import {usePadButton} from '../components/player/usePadButton.js';
 import {useTriggerSeek} from '../components/player/useTriggerSeek.js';
 import {useUpNext} from '../components/player/useUpNext.js';
+import {PauseIcon} from '../components/Icons.jsx';
 
 // The controls fade out this long after the last input while the film plays.
 const CONTROLS_MS = 4000;
@@ -298,7 +300,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
             onEnd={upNext.finish} onError={({error: failed}) => setError(failed)} />
         )}
         {!!subtitle && !error && (
-          <View className={`absolute left-0 right-0 items-center ${controls ? 'bottom-[150px]' : 'bottom-[56px]'}`}>
+          <View className={`absolute left-0 right-0 items-center ${controls ? 'bottom-[316px]' : 'bottom-[56px]'}`}>
             <View className="px-5 py-2 rounded-xl bg-black/55 items-center">
               {subtitle.split('\n').map((line, index) => (
                 <SubtitleLine key={index} size={settings.subtitleSize}>{line}</SubtitleLine>
@@ -311,6 +313,13 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
             <Text className="font-semi text-lg text-white/80">{status.state === 'buffering' ? 'Buffering…' : 'Loading…'}</Text>
           </View>
         )}
+        {paused && !panel && !waiting && !error && (
+          <View className="absolute inset-0 items-center justify-center">
+            <View className="w-[96px] h-[96px] rounded-full bg-black/45 items-center justify-center">
+              <PauseIcon size={40} color="#ffffff" />
+            </View>
+          </View>
+        )}
         {error && (
           <View className="absolute inset-0 items-center justify-center gap-4">
             <Text className="font-semi text-xl text-white">Can't play this</Text>
@@ -319,16 +328,17 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
         )}
         <motion.View className="absolute left-0 right-0 top-0 px-12 pt-10 pb-24 bg-gradient-to-b from-black/80 to-transparent"
           animate={{opacity: controls ? 1 : 0}} transition={transitions.panel}>
-          <PlayerHeader item={item} onBack={onClose} onOptions={() => openPanel()}
+          <PlayerHeader onBack={onClose} onOptions={() => openPanel()}
             onNext={next && onNext ? () => onNext(next) : null} />
         </motion.View>
-        <motion.View className="absolute left-0 right-0 bottom-0 px-12 pb-9 pt-24 bg-gradient-to-t from-black/85 via-black/50 to-transparent"
+        <motion.View className="absolute left-0 right-0 bottom-0 px-12 pb-9 pt-32 bg-gradient-to-t from-black/90 via-black/55 to-transparent"
           animate={{opacity: controls ? 1 : 0}} transition={transitions.panel}>
-          <Scrubber position={status.position} duration={status.duration} buffered={status.buffered} paused={paused}
+          <PlayerTitle item={item} position={status.position} duration={status.duration} dim={pending != null} />
+          <Scrubber position={status.position} duration={status.duration} buffered={status.buffered}
             pending={pending} rate={rate} onPress={togglePause} />
         </motion.View>
         {(skip || offering) && (
-          <View className={`absolute right-12 ${controls ? 'bottom-[132px]' : 'bottom-[48px]'}`}>
+          <View className={`absolute right-12 ${controls ? 'bottom-[316px]' : 'bottom-[48px]'}`}>
             {offering ? <UpNext next={next} seconds={upNext.seconds} onPlay={upNext.play} />
               : <SkipPrompt kind={skip.kind} onPress={skipNow} />}
           </View>

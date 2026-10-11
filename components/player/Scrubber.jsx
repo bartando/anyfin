@@ -1,55 +1,57 @@
 import {useEffect} from 'react';
 import {Text, View, useIsFocused} from '@ps5-react/core';
-import {px} from '../../theme.js';
+import {SCREEN, px} from '../../theme.js';
 import {clock} from '../../lib/format.js';
-import {PauseIcon, PlayIcon} from '../Icons.jsx';
 import {setQuietEdges} from '../../lib/edges.js';
 
-const THUMB = 14, THUMB_FOCUSED = 22, BUBBLE_W = 200;
+// The bar spans the screen less the player's side padding (px-12); the tag over a seek stays inside it.
+const BAR_W = SCREEN.w - 2 * 48, TAG_W = 240;
 
 /**
  * The seek bar, the only focusable element in its row: Left and Right find nothing to move to, and
- * the player turns them into seeks. X pauses. `pending` is where a seek still being chosen lands;
- * `rate`, while a trigger scrubs, how fast it moves there (film seconds a second).
+ * the player turns them into seeks. X pauses. `pending` is where a seek still being chosen lands: the
+ * stretch it skips lights up and its time and distance show over where it ends; `rate`, while a
+ * trigger scrubs, how fast it moves there (film seconds a second).
  */
-export function Scrubber({position, duration, buffered, paused, pending, rate, onPress}) {
+export function Scrubber({position, duration, buffered, pending, rate, onPress}) {
   // Closing the player with the bar focused may never blur it.
   useEffect(() => () => setQuietEdges(false), []);
   return (
-    <View focusKey="player-bar" onPress={onPress} onFocus={() => setQuietEdges(true)} onBlur={() => setQuietEdges(false)}
-      className="flex-row items-center gap-5 h-[56px]">
-      <Bar position={position} duration={duration} buffered={buffered} paused={paused} pending={pending} rate={rate} />
+    <View focusKey="player-bar" onPress={onPress} onFocus={() => setQuietEdges(true)} onBlur={() => setQuietEdges(false)}>
+      <Bar position={position} duration={duration} buffered={buffered} pending={pending} rate={rate} />
     </View>
   );
 }
 
-function Bar({position, duration, buffered, paused, pending, rate}) {
+function Bar({position, duration, buffered, pending, rate}) {
   const focused = useIsFocused();
-  const shown = pending ?? position;
   const fraction = value => (duration > 0 ? Math.min(1, Math.max(0, value / duration)) : 0);
-  const at = `${fraction(shown) * 100}%`;
-  const thumb = focused ? THUMB_FOCUSED : THUMB;
-  const Glyph = paused ? PlayIcon : PauseIcon;
+  const played = fraction(position);
+  const target = pending == null ? null : fraction(pending);
   return (
     <>
-      <Glyph size={26} color="#ffffff" />
-      <Text className="font-semi text-md text-white w-[84px]">{clock(shown)}</Text>
-      <View className={`flex-1 rounded-full bg-white/20 ${focused ? 'h-[8px]' : 'h-[5px]'}`}>
-        <View className="absolute left-0 top-0 bottom-0 rounded-full bg-white/30" style={{width: `${fraction(buffered) * 100}%`}} />
-        <View className="absolute left-0 top-0 bottom-0 rounded-full bg-accent" style={{width: at}} />
-        <View className="absolute rounded-full bg-white" style={{left: at, top: '50%', width: px(thumb), height: px(thumb),
-          marginLeft: -px(thumb / 2), marginTop: -px(thumb / 2)}} />
-        {pending != null && (
-          <View className="absolute items-center" style={{left: at, bottom: px(20), width: px(BUBBLE_W), marginLeft: -px(BUBBLE_W / 2)}}>
-            <View className="px-3 py-1 rounded-lg bg-white">
-              <Text className="font-semi text-md text-canvas">
+      <View className={`rounded-full bg-white/20 ${focused ? 'h-[6px]' : 'h-[4px]'}`}>
+        <View className="absolute left-0 top-0 bottom-0 rounded-full bg-white/25" style={{width: `${fraction(buffered) * 100}%`}} />
+        <View className="absolute left-0 top-0 bottom-0 rounded-full bg-gradient-to-r from-accent to-accent-soft"
+          style={{width: `${played * 100}%`}} />
+        {target != null && (
+          <>
+            <View className="absolute top-0 bottom-0 rounded-full bg-white/60"
+              style={{left: `${Math.min(played, target) * 100}%`, width: `${Math.abs(target - played) * 100}%`}} />
+            <View className="absolute flex-row items-end justify-center gap-3 bottom-[16px]"
+              style={{left: px(Math.min(Math.max(target * BAR_W - TAG_W / 2, 0), BAR_W - TAG_W)), width: px(TAG_W)}}>
+              <Text className="font-semi text-lg text-white">{clock(pending)}</Text>
+              <Text className="font-semi text-md text-accent-soft">
                 {signed(pending - position)}{rate > 0 ? `  ${Math.round(rate)}×` : ''}
               </Text>
             </View>
-          </View>
+          </>
         )}
       </View>
-      <Text className="font-semi text-md text-white w-[96px] text-right">−{clock(duration - shown)}</Text>
+      <View className="flex-row justify-between mt-3">
+        <Text className="font-semi text-md text-white">{clock(position)}</Text>
+        <Text className="font-semi text-md text-white/65">−{clock(duration - position)}</Text>
+      </View>
     </>
   );
 }

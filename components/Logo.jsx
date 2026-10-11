@@ -7,18 +7,19 @@ import {logoUrl} from '../lib/art.js';
 /**
  * The title's logo art, fitted into w×h (logical px) and pinned bottom-left. Once onLoad reports the
  * source size the image box takes the fitted size and flex does the pinning (no transform: the box is
- * far over the 768 px transform buffer). Falls back to text.
+ * far over the 768 px transform buffer). Falls back to text: `title`, the item's own by default. `tint`
+ * paints the art one color, for places where a dark logo would vanish.
  */
 const MAX_UPSCALE = 2;
 
-export function Logo({item, w, h}) {
+export function Logo({item, w, h, title = item.title, tint}) {
   const [state, setState] = useState({key: null, width: 0, height: 0, failed: false});
   const uri = logoUrl(item);
   const mine = state.key === item.key;
   if (!uri || (mine && state.failed)) {
     return (
       <View style={{width: px(w), minHeight: px(Math.min(h, 70))}} className="justify-end">
-        <Text className="font-semi text-hero text-white line-clamp-2">{clean(item.title)}</Text>
+        <Text className="font-semi text-hero text-white line-clamp-2">{clean(title)}</Text>
       </View>
     );
   }
@@ -34,7 +35,7 @@ export function Logo({item, w, h}) {
       <Image key={item.key} source={{uri}} resizeMode="contain" onLoad={onLoad}
         onError={() => setState({key: item.key, failed: true, width: 0, height: 0})}
         style={{width: fitted ? state.width : px(w), height: fitted ? state.height : px(h),
-          opacity: mine ? 1 : 0}} />
+          opacity: mine ? 1 : 0, tintColor: tint}} />
     </View>
   );
 }

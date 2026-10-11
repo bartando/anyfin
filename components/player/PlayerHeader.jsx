@@ -1,29 +1,16 @@
 import {Text, View, useIsFocused} from '@ps5-react/core';
 import {px} from '../../theme.js';
-import {clean} from '../../lib/format.js';
-import {episodeCode} from '../../lib/jellyfin/items.js';
 import {BackIcon, NextEpisodeIcon, SubtitlesIcon} from '../Icons.jsx';
 
 const LABEL_W = 200, BUTTON = 52;
 
-/** Back, Audio & Subtitles and Next Episode on the left, the title on the right. */
-export function PlayerHeader({item, onBack, onOptions, onNext}) {
-  const episode = item.kind === 'episode';
+/** Back, Audio & Subtitles and Next Episode. The title sits over the seek bar. */
+export function PlayerHeader({onBack, onOptions, onNext}) {
   return (
-    <View className="flex-row items-start justify-between">
-      <View className="flex-row gap-7">
-        <IconButton focusKey="player-back" icon={BackIcon} label="Back" onPress={onBack} />
-        <IconButton focusKey="player-options" icon={SubtitlesIcon} label="Audio & Subtitles" onPress={onOptions} />
-        {onNext && <IconButton focusKey="player-next" icon={NextEpisodeIcon} label="Next Episode" onPress={onNext} />}
-      </View>
-      <View className="w-[640px] items-end pt-1">
-        <Text className="font-semi text-xl text-white text-right truncate">{clean(episode ? item.seriesTitle ?? item.title : item.title)}</Text>
-        {episode && (
-          <Text className="font-inter text-md text-white/75 text-right truncate">
-            {[episodeCode(item), clean(item.title)].filter(Boolean).join(' · ')}
-          </Text>
-        )}
-      </View>
+    <View className="flex-row gap-7">
+      <IconButton focusKey="player-back" icon={BackIcon} label="Back" onPress={onBack} />
+      <IconButton focusKey="player-options" icon={SubtitlesIcon} label="Audio & Subtitles" onPress={onOptions} />
+      {onNext && <IconButton focusKey="player-next" icon={NextEpisodeIcon} label="Next Episode" onPress={onNext} />}
     </View>
   );
 }

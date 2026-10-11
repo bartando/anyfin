@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {FocusScope, Image, Text, View, motion, transitions, useIsFocused} from '@ps5-react/core';
 import {Brand} from './Brand.jsx';
-import {localNow} from '../lib/clock.js';
+import {formatTime, localNow} from '../lib/clock.js';
 import {useSettings} from '../lib/settings.js';
 import {sized} from '../lib/jellyfin/api.js';
 import {FocusRing} from './FocusRing.jsx';
@@ -45,12 +45,7 @@ function Clock() {
     return () => clearTimeout(id);
   }, [now]);
   const {clock24} = useSettings();
-  const mm = String(now.minutes).padStart(2, '0');
-  if (!clock24) {
-    const h = now.hours % 12 || 12;
-    return <Text className="font-semi text-lg text-white">{`${h}:${mm} ${now.hours < 12 ? 'AM' : 'PM'}`}</Text>;
-  }
-  return <Text className="font-semi text-lg text-white">{`${String(now.hours).padStart(2, '0')}:${mm}`}</Text>;
+  return <Text className="font-semi text-lg text-white">{formatTime(now, clock24)}</Text>;
 }
 
 function GearSlot() {
