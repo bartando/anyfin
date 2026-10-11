@@ -5,7 +5,8 @@ import {clean} from '../lib/format.js';
 import {logoUrl, posterUrl, thumbUrl} from '../lib/art.js';
 import {caption, cardTitle} from '../lib/jellyfin/items.js';
 import {useIsPlayed} from '../lib/favorites.js';
-import {FocusCard, Placeholder} from './FocusCard.jsx';
+import {FocusCard} from './FocusCard.jsx';
+import {MoviePlaceholder} from './MoviePlaceholder.jsx';
 import {CheckIcon} from './Icons.jsx';
 
 const POSTER_BOX = {width: px(POSTER.w), height: px(POSTER.h)};
@@ -29,16 +30,13 @@ function Progress({item, w}) {
   );
 }
 
-// 16:9 art with the title logo over a bottom shade, Jellyfin "thumb" style. The title text sits
-// underneath as the placeholder until the art arrives (or if it fails).
+// 16:9 art with the title logo over a bottom shade, Jellyfin "thumb" style. The mascot and title
+// sit underneath until the art arrives (or if it fails).
 export const BackdropCard = memo(function BackdropCard({item, onPress, onFocus, logo = true}) {
   const uri = thumbUrl(item, SIZES.card);
   return (
     <FocusCard w={CARD.w} h={CARD.h} radius={CARD.radius} item={item} onPress={onPress} onFocus={onFocus}>
-      <View className="absolute inset-0 rounded-xl bg-panel" />
-      <Placeholder>
-        <Text className="font-inter text-xs text-slate-400 text-center line-clamp-2">{clean(cardTitle(item))}</Text>
-      </Placeholder>
+      <MoviePlaceholder title={cardTitle(item)} wide />
       {uri && <Image source={{uri}} className="w-[240px] h-[135px] rounded-xl" />}
       {logo && item.logo && item.kind !== 'episode' && (
         <>
@@ -53,16 +51,13 @@ export const BackdropCard = memo(function BackdropCard({item, onPress, onFocus, 
   );
 });
 
-/** A grid poster. A placeholder (a title still loading) draws the empty tile and can take focus. */
+/** A grid poster. A title still loading draws the mascot and can take focus. */
 export const PosterCard = memo(function PosterCard({item, onPress, onFocus, onBlur}) {
   const uri = item.placeholder ? null : posterUrl(item);
   return (
     <FocusCard w={POSTER.w} h={POSTER.h} radius={POSTER.radius} item={item} onPress={item.placeholder ? null : onPress}
       onFocus={onFocus} onBlur={onBlur}>
-      <View className="absolute inset-0 rounded-xl bg-panel" />
-      <Placeholder>
-        <Text className="font-inter text-sm text-slate-400 text-center line-clamp-3">{clean(item.title)}</Text>
-      </Placeholder>
+      <MoviePlaceholder title={item.title} />
       {uri && <Image source={{uri}} className="rounded-xl" style={POSTER_BOX} />}
       {!item.placeholder && <Progress item={item} w={POSTER.w} />}
     </FocusCard>
@@ -78,6 +73,20 @@ export const CaptionedCard = memo(function CaptionedCard({item, onPress, onFocus
       <View className="pt-1 w-[240px]">
         <Text className="font-semi text-xs text-white truncate w-[240px]">{clean(title ?? cardTitle(item))}</Text>
         {second ? <Text className="font-inter text-xs text-slate-400 truncate w-[240px]">{clean(second)}</Text> : null}
+      </View>
+    </View>
+  );
+});
+
+/** A poster with its title and year centered underneath, as Jellyfin's "More Like This" row draws it. */
+export const CaptionedPoster = memo(function CaptionedPoster({item, onPress, onFocus}) {
+  const second = caption(item);
+  return (
+    <View className="gap-1">
+      <PosterCard item={item} onPress={onPress} onFocus={onFocus} />
+      <View className="pt-1 w-[176px] items-center">
+        <Text className="font-semi text-xs text-white truncate w-[176px] text-center">{clean(item.title)}</Text>
+        {second ? <Text className="font-inter text-xs text-slate-400 truncate w-[176px] text-center">{clean(second)}</Text> : null}
       </View>
     </View>
   );

@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {FocusScope, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
+import {Brand} from '../components/Brand.jsx';
 import {getLastServer, rememberServer} from '../lib/jellyfin/session.js';
 import {normalizeAddress, probeServer} from '../lib/jellyfin/api.js';
 import {discoverServers} from '../lib/jellyfin/discovery.js';
@@ -12,7 +13,7 @@ import {BackIcon, LockIcon, ServerIcon} from '../components/Icons.jsx';
 function Wordmark() {
   return (
     <View className="absolute left-12 top-0 h-[80px] justify-center">
-      <Text className="font-semi text-xl text-white">Any<Text className="font-semi text-xl text-accent">fin</Text></Text>
+      <Brand />
     </View>
   );
 }

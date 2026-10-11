@@ -1,6 +1,6 @@
-import {memo, useState} from 'react';
+import {memo, useRef, useState} from 'react';
 import {FocusScope, ScrollView, Text, View, useIsFocused} from '@ps5-react/core';
-import {px} from '../theme.js';
+import {POSTER, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
 import {loadEpisodes, loadItem, loadNextEpisode, loadSeasons, loadSimilar} from '../lib/jellyfin/library.js';
 import {episodeCode} from '../lib/jellyfin/items.js';
@@ -8,18 +8,34 @@ import {useLoad} from '../lib/useLoad.js';
 import {toggleFavorite, togglePlayed, useIsFavorite, useIsPlayed} from '../lib/favorites.js';
 import {Backdrop} from '../components/Backdrop.jsx';
 import {Button} from '../components/Button.jsx';
-import {CaptionedCard} from '../components/Cards.jsx';
+import {CaptionedCard, CaptionedPoster} from '../components/Cards.jsx';
 import {BackIcon, CheckIcon, HeartFilledIcon, HeartIcon, PlayIcon} from '../components/Icons.jsx';
 import {Logo} from '../components/Logo.jsx';
 import {MetaLine} from '../components/Meta.jsx';
 import {PersonBubble} from '../components/People.jsx';
 import {Shelf} from '../components/Shelf.jsx';
+import {CardsSkeleton, PeopleSkeleton, PillsSkeleton, PostersSkeleton} from '../components/Skeleton.jsx';
 
-// The info block keeps the first shelf where it sat before the page scrolled: just above the bottom edge.
-const INFO_H = 486;
 // Engine coordinates are 16-bit: a row of 240 px cards overflows past about 42 of them, so a long
 // season (a soap, an anime) shows its episodes this many at a time.
 const EPISODES_SHOWN = 40;
+const EPISODES_H = px(206), CAST_H = px(176), SIMILAR_H = px(POSTER.h + 71);
+// Placeholder tiles: enough to run past the right edge.
+const CARDS_SHOWN = 6, POSTERS_SHOWN = 8, PEOPLE_SHOWN = 9;
+
+/**
+ * A season's episodes, fetched once per detail page: the season pills select on focus, so moving
+ * along them would otherwise ask again for every season passed, including ones already shown.
+ */
+function cachedEpisodes(cache, seriesId, seasonId) {
+  if (!cache.has(seasonId)) {
+    const entry = {list: null};
+    entry.promise = loadEpisodes(seriesId, seasonId).then(list => (entry.list = list),
+      error => { cache.delete(seasonId); throw error; });
+    cache.set(seasonId, entry);
+  }
+  return cache.get(seasonId).promise;
+}
 
 function SeasonLabel({label, selected}) {
   const focused = useIsFocused();
@@ -48,10 +64,24 @@ const Pills = memo(function Pills({options, selected, onSelect}) {
   );
 });
 
-/** A season's episodes, EPISODES_SHOWN at a time, starting at the block that holds `next`. */
-function Episodes({seriesId, seasonId, next, onPlay}) {
-  const {data: episodes} = useLoad(`episodes-${seasonId}`, () => loadEpisodes(seriesId, seasonId));
+/**
+ * A season's episodes, EPISODES_SHOWN at a time, starting at the block that holds `next`. While they
+ * load, placeholders sized from the season's episode count hold their place.
+ */
+function Episodes({seriesId, seasonId, count, cache, next, onPlay}) {
+  const cached = cache.get(seasonId)?.list;
+  const {data: loaded, error} = useLoad(cached ? null : `episodes-${seasonId}`,
+    () => cachedEpisodes(cache, seriesId, seasonId));
   const [picked, setPicked] = useState(null);
+  const episodes = cached ?? loaded;
+  if (!episodes && !error) {
+    return (
+      <>
+        {count > EPISODES_SHOWN && <PillsSkeleton count={Math.ceil(count / EPISODES_SHOWN)} />}
+        <CardsSkeleton count={Math.min(count || CARDS_SHOWN, CARDS_SHOWN)} height={EPISODES_H} />
+      </>
+    );
+  }
   if (!episodes?.length) return null;
   const blocks = Math.ceil(episodes.length / EPISODES_SHOWN);
   const nextAt = next ? episodes.findIndex(episode => episode.id === next.id) : -1;
@@ -62,7 +92,7 @@ function Episodes({seriesId, seasonId, next, onPlay}) {
   return (
     <>
       {blocks > 1 && <Pills options={options} selected={block} onSelect={setPicked} />}
-      <Shelf height={px(206)}>
+      <Shelf height={EPISODES_H}>
         {shown.map(episode => (
           <CaptionedCard key={episode.key} item={episode} onPress={onPlay}
             title={`${episode.episode != null ? `${episode.episode}. ` : ''}${episode.title}`}
@@ -84,14 +114,15 @@ function playLabel(item, next) {
  * shown first is the card's; the full item from the server fills in the rest.
  */
 export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen, onPerson}) {
-  const {data: live} = useLoad(`item-${shown.id}`, () => loadItem(shown.id));
+  const {data: live, error: liveError} = useLoad(`item-${shown.id}`, () => loadItem(shown.id));
   const item = live ? {...shown, ...live} : shown;
   const series = item.kind === 'tv';
-  const {data: similar} = useLoad(`similar-${shown.id}`, () => loadSimilar(shown.id));
-  const {data: seasons} = useLoad(series ? `seasons-${shown.id}` : null, () => loadSeasons(shown.id));
+  const {data: similar, error: similarError} = useLoad(`similar-${shown.id}`, () => loadSimilar(shown.id));
+  const {data: seasons, error: seasonsError} = useLoad(series ? `seasons-${shown.id}` : null, () => loadSeasons(shown.id));
   const {data: next} = useLoad(series ? `next-${shown.id}` : null, () => loadNextEpisode(shown.id));
   const [picked, setPicked] = useState(shown.initialSeasonId ?? null);
   const seasonId = picked ?? next?.seasonId ?? seasons?.[0]?.id ?? null;
+  const episodeCache = useRef(new Map()).current;
   const favorite = useIsFavorite(item);
   const played = useIsPlayed(item);
   // About six lines fit above the first shelf; splitText keeps each node under the 255-byte cap.
@@ -106,8 +137,8 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
         <View pointerEvents="none" className="absolute left-0 right-0 bottom-0 h-[420px]
           bg-gradient-to-t from-canvas via-canvas/90 to-transparent" />
         <ScrollView className="absolute inset-0">
-          <View style={{height: px(INFO_H)}}>
-            <View className="absolute left-12 top-[48px] w-[640px] gap-3">
+          <View scrollAnchor className="px-12 pt-[48px] pb-10">
+            <View className="w-[640px] gap-3">
               <Logo item={item} w={420} h={110} />
               <MetaLine item={item} genres={3} />
               {item.tagline && <Text className="font-semi text-md text-accent-soft">{clean(item.tagline)}</Text>}
@@ -117,31 +148,40 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
                 ))}
               </View>
               <View className="flex-row gap-4 pt-2">
-                <Button label={playLabel(item, next)} icon={PlayIcon} primary onPress={() => onPlay(series && next ? next : item)} />
+                <Button label="Back" icon={BackIcon} onPress={onClose} />
+                <Button label={playLabel(item, next)} icon={PlayIcon} primary autoFocus onPress={() => onPlay(series && next ? next : item)} />
                 <Button label={favorite ? 'In Favorites' : 'Favorite'} icon={favorite ? HeartFilledIcon : HeartIcon}
                   onPress={() => toggleFavorite(item)} />
                 <Button label={played ? 'Watched' : 'Mark Watched'} icon={played ? CheckIcon : undefined}
                   onPress={() => togglePlayed(item)} />
-                <Button label="Back" icon={BackIcon} onPress={onClose} />
               </View>
             </View>
           </View>
           <View className="gap-4 pb-12">
+            {series && !seasons && !seasonsError && (
+              <View className="gap-1">
+                <PillsSkeleton count={Math.min(item.seasons || 3, 8)} />
+                <CardsSkeleton count={CARDS_SHOWN} height={EPISODES_H} />
+              </View>
+            )}
             {series && seasons?.length > 0 && (
               <View className="gap-1">
                 <Pills options={seasons.map(season => ({id: season.id, label: clean(season.title)}))}
                   selected={seasonId} onSelect={setPicked} />
-                {seasonId && <Episodes key={seasonId} seriesId={shown.id} seasonId={seasonId} next={next} onPlay={onPlay} />}
+                {seasonId && <Episodes key={seasonId} seriesId={shown.id} seasonId={seasonId} cache={episodeCache}
+                  count={seasons.find(season => season.id === seasonId)?.childCount} next={next} onPlay={onPlay} />}
               </View>
             )}
+            {!live && !liveError && <PeopleSkeleton title="Cast" count={PEOPLE_SHOWN} height={CAST_H} />}
             {cast.length > 0 && (
-              <Shelf title="Cast" height={px(176)}>
+              <Shelf title="Cast" height={CAST_H} anchor>
                 {cast.map(person => <PersonBubble key={person.id} person={person} onPress={onPerson} />)}
               </Shelf>
             )}
+            {!similar && !similarError && <PostersSkeleton title="More like this" count={POSTERS_SHOWN} height={SIMILAR_H} />}
             {similar?.length > 0 && (
-              <Shelf title="More like this" height={px(206)}>
-                {similar.map(related => <CaptionedCard key={related.key} item={related} onPress={onOpen} />)}
+              <Shelf title="More like this" height={SIMILAR_H} anchor>
+                {similar.map(related => <CaptionedPoster key={related.key} item={related} onPress={onOpen} />)}
               </Shelf>
             )}
           </View>

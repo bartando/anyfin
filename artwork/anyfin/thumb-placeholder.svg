@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="405" viewBox="0 0 960 540">
+  <title>Anyfin video thumbnail placeholder</title>
+  <desc>A muted smiling jelly on a near-black film strip, with space below for the title.</desc>
+  <defs>
+    <pattern id="placeholder-film" width="960" height="52" patternUnits="userSpaceOnUse">
+      <rect x="26" y="12" width="16" height="24" rx="4" fill="#FFFFFF" opacity=".025"/>
+      <rect x="918" y="12" width="16" height="24" rx="4" fill="#FFFFFF" opacity=".025"/>
+    </pattern>
+  </defs>
+  <rect width="960" height="540" fill="#09090B"/>
+  <rect x="64" y="28" width="832" height="484" rx="24" fill="none" stroke="#FFFFFF" stroke-opacity=".025"/>
+  <rect x="26" y="24" width="16" height="494" fill="url(#placeholder-film)"/>
+  <rect x="918" y="24" width="16" height="494" fill="url(#placeholder-film)"/>
+  <g id="placeholder-mascot" transform="translate(347 62) scale(.52)" opacity=".26"/>
+</svg>

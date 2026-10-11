@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocus}
   from '@ps5-react/core';
 import {useInterfaceSounds} from './sounds.js';
+import {LaunchIntro} from './components/LaunchIntro.jsx';
 import {useSession} from './lib/jellyfin/session.js';
 import {LIBRARIES, loadHome} from './lib/jellyfin/library.js';
 import {useLoad} from './lib/useLoad.js';
@@ -52,10 +53,25 @@ const STACK_MAX = 30;
 function App() {
   useInterfaceSounds();
   const session = useSession();
-  return session ? <Main key={`${session.server}|${session.userId}|${session.token}`} session={session} /> : <ConnectPage />;
+  const [launched, setLaunched] = useState(false);
+  const finishLaunch = useCallback(() => setLaunched(true), []);
+  return (
+    <View className="w-screen h-screen bg-canvas">
+      {/* Mount once so Home and the preloaded library tabs can fetch during the intro.
+          Keep their UI out of both painting and navigation until the intro releases it. */}
+      <FocusScope inert={!launched}>
+        <View className="absolute inset-0" style={{display: launched ? 'flex' : 'none'}}>
+          {session ? (
+            <Main key={`${session.server}|${session.userId}|${session.token}`} session={session} active={launched} />
+          ) : launched ? <ConnectPage /> : null}
+        </View>
+      </FocusScope>
+      {!launched && <View className="absolute inset-0"><LaunchIntro onComplete={finishLaunch} /></View>}
+    </View>
+  );
 }
 
-function Main({session}) {
+function Main({session, active}) {
   const [tab, setTab] = useState(0);
   const [stack, setStack] = useState([]);
   const pageId = useRef(0);
@@ -67,10 +83,10 @@ function Main({session}) {
   const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return;
+    if (!active || started.current) return;
     started.current = true;
     focus('hero-play');
-  }, []);
+  }, [active]);
   useEffect(() => {
     if (!toast) return undefined;
     const id = setTimeout(() => setToast(null), TOAST_MS);
