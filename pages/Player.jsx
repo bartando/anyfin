@@ -5,6 +5,7 @@ import {loadMarkers, reportProgress, reportStart, reportStopped, startPlayback} 
 import {skippable} from '../lib/jellyfin/markers.js';
 import {autoplayFor, rememberAutoplay, rememberUpscaler, upscalerFor} from '../lib/playerPrefs.js';
 import {getSettings, useSettings} from '../lib/settings.js';
+import {progressChanged} from '../lib/progress.js';
 import {PlayerHeader} from '../components/player/PlayerHeader.jsx';
 import {PlayerTitle} from '../components/player/PlayerTitle.jsx';
 import {Scrubber} from '../components/player/Scrubber.jsx';
@@ -105,7 +106,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   useEffect(() => {
     if (!playback) return undefined;
     reportStart(playback, playback.startSeconds);
-    return () => { reportStopped(playback, position.current); };
+    return () => { reportStopped(playback, position.current).then(progressChanged); };
   }, [playback]);
 
   // Controls: shown on any input, hidden a while after the last while the film plays.
