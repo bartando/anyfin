@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {FocusScope, ScrollView, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
 import {logOut} from '../lib/jellyfin/auth.js';
 import {setSetting, useSettings} from '../lib/settings.js';
 import {ActionRow, ChoiceRow, InfoRow, ToggleRow} from '../components/SettingRow.jsx';
@@ -138,7 +138,7 @@ function About() {
 export function SettingsPage({session, section: initial = 'playback', active = true, onClose}) {
   const [section, setSection] = useState(initial);
   const settings = useSettings();
-  const {focus} = useFocus();
+  const {focus} = useFocusActions();
   useEffect(() => { focus(`settings:${initial}`); }, []);
   const left = `settings:${section}`;
   const shown = SECTIONS.find(s => s.id === section);

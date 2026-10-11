@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocus}
+import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocusActions}
   from '@ps5-react/core';
 import {useInterfaceSounds} from './sounds.js';
 import {useMoveTracking} from './lib/lastMove.js';
@@ -99,7 +99,7 @@ function Main({session, active}) {
       .map(row => (row.id === 'resume' ? {...row, items: row.items.filter(item => !unresumed.has(item.id))} : row));
     return {...loaded, rows: rows.filter(row => row.items.length)};
   }, [loaded, favoriteRows, unresumed]);
-  const {focus, focusedRect} = useFocus();
+  const {focus, focusedRect} = useFocusActions();
   const [menu, setMenu] = useState(null);
   const started = useRef(false);
 

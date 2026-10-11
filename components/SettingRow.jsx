@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {FocusScope, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
+import {FocusScope, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
 import {FocusRing} from './FocusRing.jsx';
 import {CheckIcon} from './Icons.jsx';
 
@@ -58,7 +58,7 @@ function PillCheck() {
  */
 export function ChoiceRow({focusKey, label, about, options, value, onChange, nextFocusLeft}) {
   const [open, setOpen] = useState(false);
-  const {focus} = useFocus();
+  const {focus} = useFocusActions();
   // The row comes back on the next render; focus goes to it then.
   const closing = useRef(false);
   useEffect(() => {

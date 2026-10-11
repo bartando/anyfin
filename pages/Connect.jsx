@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {FocusScope, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
+import {FocusScope, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
 import {Brand} from '../components/Brand.jsx';
 import {getLastServer, rememberServer} from '../lib/jellyfin/session.js';
 import {normalizeAddress, probeServer} from '../lib/jellyfin/api.js';
@@ -103,7 +103,7 @@ function ServerStep({onServer}) {
   const input = useTextInput(initial, 64);
   const [state, setState] = useState({busy: false, error: null});
   const servers = useDiscoveredServers();
-  const {focus} = useFocus();
+  const {focus} = useFocusActions();
   const offered = useRef(false);
   // The first servers found take focus, unless the address is already being typed.
   useEffect(() => {
@@ -159,7 +159,7 @@ function ServerStep({onServer}) {
 
 function UsersStep({server, onUser, onManual, onQuickConnect, onBack}) {
   const [state, setState] = useState({users: null, quick: false, error: null});
-  const {focus} = useFocus();
+  const {focus} = useFocusActions();
   useEffect(() => {
     let live = true;
     Promise.all([loadPublicUsers(server), quickConnectEnabled(server)]).then(
@@ -236,7 +236,7 @@ function UsernameStep({server, onUser, onBack}) {
 
 function QuickConnectStep({server, onBack}) {
   const [state, setState] = useState({code: null, error: null});
-  const {focus} = useFocus();
+  const {focus} = useFocusActions();
   useEffect(() => {
     let session = null;
     let live = true;
@@ -281,7 +281,7 @@ function QuickConnectStep({server, onBack}) {
  */
 export function ConnectPage() {
   const [step, setStep] = useState({name: 'server'});
-  const {focus} = useFocus();
+  const {focus} = useFocusActions();
   const tried = useRef(false);
   useEffect(() => {
     const last = getLastServer();
