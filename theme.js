@@ -14,6 +14,12 @@ export const CAST = {size: 96};
 export const FOCUS_SCALE = 1.05;
 export const FOCUS_LIFT = -4;
 export const RING_GAP = 4;
+// What a focused card takes past its box above and below (logical px): half its scale's growth, the
+// lift, the ring's gap and its stroke. A row that clips, as a ScrollView does, pads its cards by this.
+export const focusRoom = h => Math.ceil(h * (FOCUS_SCALE - 1) / 2 + Math.abs(FOCUS_LIFT) + RING_GAP + 2);
+// A row of captioned cards h tall, in render px: the cards, two caption lines and the focus room.
+export const CAPTION_H = 47;
+export const captionedRowH = h => px(h + CAPTION_H + 2 * focusRoom(h));
 
 export const HERO_ROTATE_MS = 8000;
 export const PREVIEW_DELAY_MS = 350;

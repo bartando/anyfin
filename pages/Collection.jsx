@@ -1,5 +1,5 @@
 import {FocusScope, ScrollView, Text, View} from '@ps5-react/core';
-import {px} from '../theme.js';
+import {CARD, captionedRowH, focusRoom, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
 import {loadCollection} from '../lib/jellyfin/library.js';
 import {useLoad} from '../lib/useLoad.js';
@@ -50,7 +50,7 @@ export function CollectionPage({collection, active = true, onClose, onOpen}) {
           </View>
           <View className="pb-12">
             {parts.length > 0 && (
-              <Shelf title="Titles" height={px(206)}>
+              <Shelf title="Titles" height={captionedRowH(CARD.h)} room={focusRoom(CARD.h)}>
                 {parts.map(part => <CaptionedCard key={part.key} item={part} onPress={onOpen} />)}
               </Shelf>
             )}

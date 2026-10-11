@@ -1,6 +1,6 @@
 import {memo, useRef, useState} from 'react';
 import {FocusScope, ScrollView, Text, View, useIsFocused} from '@ps5-react/core';
-import {POSTER, px} from '../theme.js';
+import {CARD, POSTER, captionedRowH, focusRoom, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
 import {loadEpisodes, loadItem, loadNextEpisode, loadSeasons, loadSimilar} from '../lib/jellyfin/library.js';
 import {episodeCode} from '../lib/jellyfin/items.js';
@@ -20,7 +20,7 @@ import {keepPageActions} from '../lib/pageActions.js';
 // Engine coordinates are 16-bit: a row of 240 px cards overflows past about 42 of them, so a long
 // season (a soap, an anime) shows its episodes this many at a time.
 const EPISODES_SHOWN = 40;
-const EPISODES_H = px(206), CAST_H = px(176), SIMILAR_H = px(POSTER.h + 71);
+const EPISODES_H = captionedRowH(CARD.h), CAST_H = px(176), SIMILAR_H = captionedRowH(POSTER.h);
 // Placeholder tiles: enough to run past the right edge.
 const CARDS_SHOWN = 6, POSTERS_SHOWN = 8, PEOPLE_SHOWN = 9;
 
@@ -93,7 +93,7 @@ function Episodes({seriesId, seasonId, count, cache, next, onPlay}) {
   return (
     <>
       {blocks > 1 && <Pills options={options} selected={block} onSelect={setPicked} />}
-      <Shelf height={EPISODES_H}>
+      <Shelf height={EPISODES_H} room={focusRoom(CARD.h)}>
         {shown.map(episode => (
           <CaptionedCard key={episode.key} item={episode} onPress={onPlay}
             title={`${episode.episode != null ? `${episode.episode}. ` : ''}${episode.title}`}
@@ -181,7 +181,7 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
             )}
             {!similar && !similarError && <PostersSkeleton title="More like this" count={POSTERS_SHOWN} height={SIMILAR_H} />}
             {similar?.length > 0 && (
-              <Shelf title="More like this" height={SIMILAR_H} anchor>
+              <Shelf title="More like this" height={SIMILAR_H} room={focusRoom(POSTER.h)} anchor>
                 {similar.map(related => <CaptionedPoster key={related.key} item={related} onPress={onOpen} />)}
               </Shelf>
             )}
