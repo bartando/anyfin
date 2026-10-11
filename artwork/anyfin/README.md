@@ -17,6 +17,12 @@ connection screen after the intro. Intro timers are cancelled on skip,
 completion, and unmount. Account state and the title/content IDs are unchanged.
 The header and connection screen share the outlined wordmark.
 
+`poster-placeholder.svg` and `thumb-placeholder.svg` are the movie-card layouts.
+The exporter inserts the happy icon mascot and writes self-contained SVGs and
+PNGs to `assets/brand/`, sized for the 4K poster grid and 16:9 cards. Cards keep
+these underneath remote art, so loading, missing, and failed images show the
+mascot with the title. Real artwork covers the placeholder as soon as it arrives.
+
 The intro keeps its backdrop still and updates four or fewer cropped vector
 layers, each drawn through two clipped windows to stay within the native
 1024-pixel coverage-row limit at 4K. Its 60 Hz pose table skips missed poses by

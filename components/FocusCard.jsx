@@ -73,7 +73,3 @@ export const FocusCard = memo(function FocusCard({w, h, radius, scale = FOCUS_SC
     </motion.View>
   );
 });
-
-export function Placeholder({children}) {
-  return <View className="absolute inset-0 items-center justify-center px-3">{children}</View>;
-}

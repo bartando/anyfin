@@ -39,6 +39,16 @@ for d in ['M371 360Q394 320 419 354','M596 332Q613 296 632 326']:
     ET.SubElement(body,tag('path'),{'d':d,'fill':'none','stroke':'#6338A4','stroke-width':'12','stroke-linecap':'round'})
 ET.ElementTree(icon).write(ASSETS/'icon.svg',encoding='unicode')
 render(icon,SHELL/'icon0.png',512,512,True)
+# Share the happy vector mascot with both movie-card formats. Export at their
+# native 4K UI sizes; the editable, self-contained SVGs stay alongside the PNGs.
+for name in ('poster-placeholder','thumb-placeholder'):
+    placeholder=ET.parse(ART/f'{name}.svg').getroot()
+    placeholder.find(tag('defs')).extend(copy.deepcopy(list(icon.find(tag('defs')))))
+    mount=next(n for n in placeholder.iter() if n.get('id')=='placeholder-mascot')
+    mount.append(copy.deepcopy(body))
+    ET.indent(placeholder)
+    ET.ElementTree(placeholder).write(ASSETS/f'{name}.svg',encoding='unicode')
+    render(placeholder,ASSETS/f'{name}.png',int(placeholder.get('width')),int(placeholder.get('height')),True)
 render((ART/'splash.svg').read_text(),SHELL/'pic1.png',1920,1080,True)
 render((ART/'splash.svg').read_text(),SHELL/'pic0.png',1920,1080,True)
 render((ART/'wordmark.svg').read_text(),ASSETS/'wordmark.png',1120,376)
