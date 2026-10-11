@@ -92,3 +92,24 @@ export const LockIcon = ({size = 18, color = '#ffffff'}) => (
     <Path d="M5.5 10.5h13v9.5h-13z" fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
   </Icon>
 );
+
+export const PauseIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M6.5 4.5h3.5v15H6.5zM14 4.5h3.5v15H14z" fill={color} />
+  </Icon>
+);
+
+export const SubtitlesIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M3.5 5.5h17v11h-10l-4.5 3.5v-3.5h-2.5z" fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <Line x1="7.5" y1="11" x2="11" y2="11" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="13.5" y1="11" x2="16.5" y2="11" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Icon>
+);
+
+export const NextEpisodeIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M5 4.5v15l11-7.5z" fill={color} />
+    <Path d="M17 4.5h2.5v15H17z" fill={color} />
+  </Icon>
+);

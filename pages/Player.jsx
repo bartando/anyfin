@@ -1,86 +1,143 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {FocusScope, Text, View, Video, motion, transitions, useFocus, useNavigationEvents} from '@ps5-react/core';
-import {px} from '../theme.js';
-import {clean} from '../lib/format.js';
-import {episodeCode} from '../lib/jellyfin/items.js';
+import {loadEpisodeAfter} from '../lib/jellyfin/library.js';
 import {reportProgress, reportStart, reportStopped, startPlayback} from '../lib/jellyfin/playback.js';
-import {Button} from '../components/Button.jsx';
-import {BackIcon, PlayIcon} from '../components/Icons.jsx';
+import {rememberUpscaler, upscalerFor} from '../lib/playerPrefs.js';
+import {PlayerHeader} from '../components/player/PlayerHeader.jsx';
+import {Scrubber} from '../components/player/Scrubber.jsx';
+import {OptionsPanel} from '../components/player/OptionsPanel.jsx';
+import {optionTabs} from '../components/player/options.js';
 
 // The controls fade out this long after the last input while the film plays.
 const CONTROLS_MS = 4000;
 const PROGRESS_REPORT_MS = 10000;
-
-function clock(seconds) {
-  const s = Math.max(0, Math.floor(seconds || 0));
-  const h = Math.floor(s / 3600), m = String(Math.floor(s / 60) % 60), rest = String(s % 60).padStart(2, '0');
-  return h ? `${h}:${m.padStart(2, '0')}:${rest}` : `${m}:${rest}`;
-}
-
-const PauseIcon = ({size = 18, color = '#0b0b12'}) => (
-  <View style={{width: px(size), height: px(size), flexDirection: 'row', justifyContent: 'space-between',
-    paddingLeft: px(size * 0.18), paddingRight: px(size * 0.18)}}>
-    <View style={{width: px(size * 0.22), height: px(size), backgroundColor: color, borderRadius: px(1)}} />
-    <View style={{width: px(size * 0.22), height: px(size), backgroundColor: color, borderRadius: px(1)}} />
-  </View>
-);
-
-function title(item) {
-  if (item.kind !== 'episode') return clean(item.title);
-  return [item.seriesTitle, episodeCode(item), item.title].filter(Boolean).map(clean).join(' · ');
-}
+// Left/Right on the bar collect into one seek, made this long after the last press. Held, the
+// steps grow: presses closer together than STREAK_MS count as one streak.
+const SEEK_SETTLE_MS = 650;
+const STREAK_MS = 450;
+const seekStep = streak => (streak < 4 ? 10 : streak < 12 ? 30 : 60);
+// After a seek the player keeps reporting the old position for a moment, even past its seek event:
+// the bar holds the target until a reading near it arrives, or for SEEK_LAND_MS when a keyframe
+// lands the seek short of it.
+const SEEK_LAND_MS = 2500;
 
 /**
- * The film, full screen, with the controls over it: X pauses, the buttons seek, L1/R1 jump a minute,
- * Square changes the audio track, Triangle the subtitles, Circle leaves. The position goes to the server as it plays, so
- * Continue Watching and other devices pick up where this one stopped.
+ * The film, full screen. The bar is where focus rests: Left and Right seek, X pauses, Up reaches Back,
+ * Audio & Subtitles and Next Episode. The options panel (Square) has the tracks, the version and
+ * quality, the upscaler and what is playing. L1/R1 jump a minute, L2/R2 ten seconds, Triangle cycles
+ * the subtitles. Circle first brings the hidden controls back, then leaves. The position goes to the
+ * server as it plays, so Continue Watching and other devices pick up where this one stopped.
  */
-export function PlayerPage({item, active = true, onClose}) {
+export function PlayerPage({item, active = true, onClose, onNext}) {
   const video = useRef(null);
+  const {focus, focusedKey} = useFocus();
+  const focused = useRef(focusedKey);
+  focused.current = focusedKey;
+
+  const [request, setRequest] = useState({});
   const [playback, setPlayback] = useState(null);
   const [error, setError] = useState(null);
   const [paused, setPaused] = useState(false);
   const [status, setStatus] = useState({position: 0, duration: (item.runtime ?? 0) * 60, buffered: 0, state: 'loading'});
-  const [tracks, setTracks] = useState([]);
-  const [shown, setShown] = useState(true);
   const [subtitle, setSubtitle] = useState('');
   const [subtitleTrack, setSubtitleTrack] = useState(-1);
-  const hideAt = useRef(0);
-  const {focus} = useFocus();
-  useEffect(() => { focus('player-play'); }, []);
+  const subtitleChosen = useRef(false);
+  const [upscale, setUpscale] = useState(() => upscalerFor(item));
+  const [next, setNext] = useState(null);
+  const [panel, setPanel] = useState(null);
+  const [pending, setPending] = useState(null);
   const position = useRef(0);
+  const seekingTo = useRef(null);
   const reported = useRef(0);
 
+  useEffect(() => { focus('player-bar'); }, []);
+
+  // A new request (another version or quality) reopens the stream where it was.
   useEffect(() => {
     let live = true;
-    startPlayback(item).then(found => {
+    setPlayback(null);
+    setError(null);
+    startPlayback(item, request).then(found => {
       if (!live) return;
       setPlayback(found);
-      setSubtitleTrack(found.subtitles.preferred);
+      setSubtitleTrack(current => (subtitleChosen.current ? current : found.subtitles.preferred));
     }, failed => live && setError(failed.message));
+    return () => { live = false; };
+  }, [item.id, request]);
+
+  useEffect(() => {
+    if (item.kind !== 'episode') return undefined;
+    let live = true;
+    loadEpisodeAfter(item).then(found => live && setNext(found), () => {});
     return () => { live = false; };
   }, [item.id]);
 
-  // Started, progress while playing, stopped on the way out with the last position.
+  // Started, progress while playing, stopped on the way out (or to another stream) with the last position.
   useEffect(() => {
     if (!playback) return undefined;
     reportStart(playback, playback.startSeconds);
     return () => { reportStopped(playback, position.current); };
   }, [playback]);
 
+  // Controls: shown on any input, hidden a while after the last while the film plays.
+  const [shown, setShown] = useState(true);
+  const visible = useRef(true);
+  const hideAt = useRef(0);
   const wake = useCallback(() => {
     hideAt.current = Date.now() + CONTROLS_MS;
+    visible.current = true;
     setShown(true);
   }, []);
-  useNavigationEvents(() => { if (active) wake(); });
-  useEffect(() => {
-    if (paused || error) return undefined;
-    const id = setInterval(() => { if (Date.now() >= hideAt.current) setShown(false); }, 500);
-    return () => clearInterval(id);
-  }, [paused, error]);
   useEffect(wake, [paused]);
+  useEffect(() => {
+    if (paused || error || panel || pending != null) return undefined;
+    const id = setInterval(() => {
+      if (!visible.current || Date.now() < hideAt.current) return;
+      visible.current = false;
+      setShown(false);
+      focus('player-bar');
+    }, 500);
+    return () => clearInterval(id);
+  }, [paused, error, panel, pending]);
+
+  const seekTo = target => {
+    const end = status.duration || Infinity;
+    const clamped = Math.max(0, Math.min(target, end - 1));
+    position.current = clamped;
+    seekingTo.current = {target: clamped, at: Date.now()};
+    setStatus(s => ({...s, position: clamped}));
+    video.current?.seek(clamped);
+  };
+
+  // Left/Right on the bar: one seek per streak of presses, to where they added up.
+  const scrub = useRef({target: null, streak: 0, last: 0, timer: 0});
+  const nudge = direction => {
+    const s = scrub.current, now = Date.now();
+    s.streak = now - s.last < STREAK_MS ? s.streak + 1 : 0;
+    s.last = now;
+    const end = status.duration || Infinity;
+    s.target = Math.max(0, Math.min((s.target ?? position.current) + direction * seekStep(s.streak), end - 1));
+    setPending(s.target);
+    clearTimeout(s.timer);
+    s.timer = setTimeout(() => {
+      seekTo(s.target);
+      s.target = null;
+      setPending(null);
+    }, SEEK_SETTLE_MS);
+  };
+  useEffect(() => () => clearTimeout(scrub.current.timer), []);
+
+  useNavigationEvents(event => {
+    if (!active) return;
+    if (event.type === 'blocked' && !panel && focused.current === 'player-bar' &&
+        (event.direction === 'left' || event.direction === 'right')) nudge(event.direction === 'left' ? -1 : 1);
+    wake();
+  });
 
   const onProgress = useCallback(({currentTime, playableDuration, seekableDuration}) => {
+    const seek = seekingTo.current;
+    if (seek && Math.abs(currentTime - seek.target) > 2 && Date.now() - seek.at < SEEK_LAND_MS) return;
+    seekingTo.current = null;
     position.current = currentTime;
     setStatus(s => ({...s, position: currentTime, buffered: playableDuration, duration: seekableDuration || s.duration}));
     if (playback && Date.now() - reported.current >= PROGRESS_REPORT_MS) {
@@ -89,58 +146,79 @@ export function PlayerPage({item, active = true, onClose}) {
     }
   }, [playback]);
 
-  const seekBy = seconds => {
-    const target = Math.max(0, Math.min(position.current + seconds, (status.duration || Infinity) - 1));
-    position.current = target;
-    setStatus(s => ({...s, position: target}));
-    video.current?.seek(target);
-  };
   const togglePause = () => setPaused(was => {
     if (playback) reportProgress(playback, position.current, !was);
     return !was;
   });
-  const nextTrack = () => {
-    const current = video.current?.getStatus();
-    if (!current?.audioTracks?.length) return;
-    const at = current.audioTracks.findIndex(track => track.index === current.audioTrack);
-    video.current.selectAudioTrack(current.audioTracks[(at + 1) % current.audioTracks.length].index);
+
+  // The panel pauses the film and gives it back as it was.
+  const pausedBefore = useRef(false);
+  const openPanel = (tab = 'tracks') => {
+    if (!playback || panel) return;
+    pausedBefore.current = paused;
+    setPaused(true);
+    setPanel(tab);
   };
-  const subtitleOptions = playback?.subtitles.options ?? [];
-  const nextSubtitles = () => {
-    const order = [-1, ...subtitleOptions.map(option => option.track)];
-    setSubtitleTrack(current => order[(order.indexOf(current) + 1) % order.length]);
+  const closePanel = () => {
+    setPanel(null);
+    setPaused(pausedBefore.current);
   };
-  const subtitleLabel = subtitleOptions.find(option => option.track === subtitleTrack)?.label;
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !panel) focus('player-options');
+    wasOpen.current = !!panel;
+  }, [panel]);
+
+  const chooseSubtitles = track => {
+    subtitleChosen.current = true;
+    setSubtitleTrack(track);
+  };
+  const subtitleOrder = [-1, ...(playback?.subtitles.options ?? []).map(option => option.track)];
+  const restart = change => setRequest(was => ({...was, ...change, startSeconds: position.current}));
+  const pick = {
+    audio: index => video.current?.selectAudioTrack(index),
+    subtitles: chooseSubtitles,
+    version: id => id !== playback?.mediaSourceId && restart({mediaSourceId: id}),
+    quality: bits => bits !== (playback?.maxBitrate ?? 0) && restart({maxBitrate: bits || undefined}),
+    upscale: model => {
+      setUpscale(model);
+      rememberUpscaler(item, model);
+    },
+  };
+
   const onAction = action => {
-    if (action === 'l1') seekBy(-60);
-    else if (action === 'r1') seekBy(60);
-    else if (action === 'l2') seekBy(-10);
-    else if (action === 'r2') seekBy(10);
-    else if (action === 'square') nextTrack();
-    else if (action === 'triangle') nextSubtitles();
+    if (action === 'l1') seekTo(position.current - 60);
+    else if (action === 'r1') seekTo(position.current + 60);
+    else if (action === 'l2') seekTo(position.current - 10);
+    else if (action === 'r2') seekTo(position.current + 10);
+    else if (action === 'triangle') chooseSubtitles(subtitleOrder[(subtitleOrder.indexOf(subtitleTrack) + 1) % subtitleOrder.length]);
+    else if (action === 'square') openPanel();
     else return false;
     return true;
   };
+  const onBack = () => {
+    if (!visible.current) wake();
+    else onClose();
+    return true;
+  };
+  const onEnd = () => (next && onNext ? onNext(next) : onClose());
 
-  const status_ = video.current?.getStatus();
-  const track = status_?.audioTracks?.find(t => t.index === status_.audioTrack);
-  const fraction = status.duration > 0 ? Math.min(1, status.position / status.duration) : 0;
-  const bufferedFraction = status.duration > 0 ? Math.min(1, status.buffered / status.duration) : 0;
   const waiting = !error && (!playback || status.state === 'loading' || status.state === 'buffering');
+  const controls = shown || paused || !!error || !!panel;
+  const live = video.current?.getStatus();
 
   return (
-    <FocusScope trap={active} inert={!active} autoFocus onBack={() => { onClose(); return true; }} onAction={onAction}>
+    <FocusScope trap={active} inert={!active} onBack={onBack} onAction={onAction}>
       <View className="w-screen h-screen bg-black">
         {playback && (
-          <Video ref={video} source={playback.url} paused={paused} startTime={playback.startSeconds}
-            subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack} onSubtitle={setSubtitle}
-            className="absolute inset-0" onProgress={onProgress}
-            onLoad={({audioTracks}) => setTracks(audioTracks)}
+          <Video key={playback.url} ref={video} source={playback.url} paused={paused} startTime={playback.startSeconds}
+            upscale={upscale || false} subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack}
+            onSubtitle={setSubtitle} className="absolute inset-0" onProgress={onProgress}
             onStatus={s => setStatus(was => ({...was, state: s.state}))}
-            onEnd={onClose} onError={({error: failed}) => setError(failed)} />
+            onEnd={onEnd} onError={({error: failed}) => setError(failed)} />
         )}
         {!!subtitle && !error && (
-          <View className={`absolute left-0 right-0 items-center ${shown || paused ? 'bottom-[200px]' : 'bottom-[56px]'}`}>
+          <View className={`absolute left-0 right-0 items-center ${controls ? 'bottom-[150px]' : 'bottom-[56px]'}`}>
             <View className="px-5 py-2 rounded-xl bg-black/55 items-center">
               {subtitle.split('\n').map((line, index) => (
                 <Text key={index} className="font-semi text-lg text-white">{line}</Text>
@@ -149,7 +227,7 @@ export function PlayerPage({item, active = true, onClose}) {
           </View>
         )}
         {waiting && (
-          <View className="absolute inset-0 items-center justify-center">
+          <View className={`absolute left-0 top-0 bottom-0 items-center justify-center ${panel ? 'right-[620px]' : 'right-0'}`}>
             <Text className="font-semi text-lg text-white/80">{status.state === 'buffering' ? 'Buffering…' : 'Loading…'}</Text>
           </View>
         )}
@@ -159,31 +237,23 @@ export function PlayerPage({item, active = true, onClose}) {
             <Text className="font-inter text-md text-slate-300">{error}</Text>
           </View>
         )}
-        <motion.View className="absolute left-0 right-0 bottom-0 px-12 pb-10 pt-24 gap-4
-          bg-gradient-to-t from-black/90 via-black/60 to-transparent"
-          animate={{opacity: shown || paused || error ? 1 : 0}} transition={transitions.panel}>
-          <Text className="font-semi text-xl text-white">{title(item)}</Text>
-          <View className="flex-row items-center gap-4">
-            <Text className="font-inter text-sm text-white w-[80px]">{clock(status.position)}</Text>
-            <View className="flex-1 h-[6px] rounded-full bg-white/20">
-              <View className="absolute left-0 top-0 h-[6px] rounded-full bg-white/30" style={{width: `${bufferedFraction * 100}%`}} />
-              <View className="absolute left-0 top-0 h-[6px] rounded-full bg-accent" style={{width: `${fraction * 100}%`}} />
-            </View>
-            <Text className="font-inter text-sm text-white w-[80px] text-right">{clock(status.duration)}</Text>
-          </View>
-          <View className="flex-row items-center gap-4">
-            <Button label="Back" icon={BackIcon} onPress={onClose} />
-            <Button label="–10 s" onPress={() => seekBy(-10)} />
-            <Button label={paused ? 'Play' : 'Pause'} icon={paused ? PlayIcon : PauseIcon} primary focusKey="player-play"
-              onPress={togglePause} />
-            <Button label="+30 s" onPress={() => seekBy(30)} />
-            {tracks.length > 1 && <Button label={`Audio: ${track ? (track.language || track.codec) : '—'}`} onPress={nextTrack} />}
-            {subtitleOptions.length > 0 && (
-              <Button label={`Subtitles: ${subtitleLabel ?? 'Off'}`} onPress={nextSubtitles} />
-            )}
-            <Text className="font-inter text-sm text-slate-300">L1/R1 one minute · L2/R2 ten seconds</Text>
-          </View>
+        <motion.View className="absolute left-0 right-0 top-0 px-12 pt-10 pb-24 bg-gradient-to-b from-black/80 to-transparent"
+          animate={{opacity: controls ? 1 : 0}} transition={transitions.panel}>
+          <PlayerHeader item={item} onBack={onClose} onOptions={() => openPanel()}
+            onNext={next && onNext ? () => onNext(next) : null} />
         </motion.View>
+        <motion.View className="absolute left-0 right-0 bottom-0 px-12 pb-9 pt-24 bg-gradient-to-t from-black/85 via-black/50 to-transparent"
+          animate={{opacity: controls ? 1 : 0}} transition={transitions.panel}>
+          <Scrubber position={status.position} duration={status.duration} buffered={status.buffered} paused={paused}
+            pending={pending} onPress={togglePause} />
+        </motion.View>
+        {panel && playback && (
+          <>
+            <View className="absolute inset-0 bg-black/50" />
+            <OptionsPanel tab={panel} onTab={setPanel} onClose={closePanel}
+              tabs={optionTabs({playback, status: live, subtitleTrack, upscale, pick})} />
+          </>
+        )}
       </View>
     </FocusScope>
   );

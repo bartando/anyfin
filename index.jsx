@@ -103,6 +103,8 @@ function Main({session, active}) {
   const openCollection = useCallback(collection => push({type: 'collection', collection}), []);
   const openFavorite = useCallback(item => (item.kind === 'collection' ? openCollection(item) : open(item)), []);
   const back = useCallback(() => setStack(pages => pages.slice(0, -1)), []);
+  // Next Episode: the player hands over to a new one in its place.
+  const playNext = useCallback(item => setStack(pages => [...pages.slice(0, -1), {type: 'player', item, id: ++pageId.current}]), []);
   // Focusing a tab selects it; on Home that also scrolls back so the focused tab is on screen.
   const select = useCallback(index => {
     setTab(index);
@@ -160,7 +162,7 @@ function Main({session, active}) {
               ) : page.type === 'person' ? (
                 <PersonPage person={page.person} active={top} onClose={back} onOpen={open} onPerson={openPerson} />
               ) : page.type === 'player' ? (
-                <PlayerPage item={page.item} active={top} onClose={back} />
+                <PlayerPage item={page.item} active={top} onClose={back} onNext={playNext} />
               ) : page.type === 'account' ? (
                 <AccountPage session={session} active={top} onClose={back} />
               ) : (
