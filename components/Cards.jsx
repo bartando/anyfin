@@ -77,3 +77,17 @@ export const CaptionedCard = memo(function CaptionedCard({item, onPress, onFocus
     </View>
   );
 });
+
+/** A poster with its title and year centered underneath, as Jellyfin's "More Like This" row draws it. */
+export const CaptionedPoster = memo(function CaptionedPoster({item, onPress, onFocus}) {
+  const second = caption(item);
+  return (
+    <View className="gap-1">
+      <PosterCard item={item} onPress={onPress} onFocus={onFocus} />
+      <View className="pt-1 w-[176px] items-center">
+        <Text className="font-semi text-xs text-white truncate w-[176px] text-center">{clean(item.title)}</Text>
+        {second ? <Text className="font-inter text-xs text-slate-400 truncate w-[176px] text-center">{clean(second)}</Text> : null}
+      </View>
+    </View>
+  );
+});

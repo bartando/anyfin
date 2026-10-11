@@ -1,6 +1,6 @@
 import {memo, useRef, useState} from 'react';
 import {FocusScope, ScrollView, Text, View, useIsFocused} from '@ps5-react/core';
-import {px} from '../theme.js';
+import {POSTER, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
 import {loadEpisodes, loadItem, loadNextEpisode, loadSeasons, loadSimilar} from '../lib/jellyfin/library.js';
 import {episodeCode} from '../lib/jellyfin/items.js';
@@ -8,22 +8,22 @@ import {useLoad} from '../lib/useLoad.js';
 import {toggleFavorite, togglePlayed, useIsFavorite, useIsPlayed} from '../lib/favorites.js';
 import {Backdrop} from '../components/Backdrop.jsx';
 import {Button} from '../components/Button.jsx';
-import {CaptionedCard} from '../components/Cards.jsx';
+import {CaptionedCard, CaptionedPoster} from '../components/Cards.jsx';
 import {BackIcon, CheckIcon, HeartFilledIcon, HeartIcon, PlayIcon} from '../components/Icons.jsx';
 import {Logo} from '../components/Logo.jsx';
 import {MetaLine} from '../components/Meta.jsx';
 import {PersonBubble} from '../components/People.jsx';
 import {Shelf} from '../components/Shelf.jsx';
-import {CardsSkeleton, PeopleSkeleton, PillsSkeleton} from '../components/Skeleton.jsx';
+import {CardsSkeleton, PeopleSkeleton, PillsSkeleton, PostersSkeleton} from '../components/Skeleton.jsx';
 
 // The info block keeps the first shelf where it sat before the page scrolled: just above the bottom edge.
 const INFO_H = 486;
 // Engine coordinates are 16-bit: a row of 240 px cards overflows past about 42 of them, so a long
 // season (a soap, an anime) shows its episodes this many at a time.
 const EPISODES_SHOWN = 40;
-const EPISODES_H = px(206), CAST_H = px(176), SIMILAR_H = px(206);
+const EPISODES_H = px(206), CAST_H = px(176), SIMILAR_H = px(POSTER.h + 71);
 // Placeholder tiles: enough to run past the right edge.
-const CARDS_SHOWN = 6, PEOPLE_SHOWN = 9;
+const CARDS_SHOWN = 6, POSTERS_SHOWN = 8, PEOPLE_SHOWN = 9;
 
 /**
  * A season's episodes, fetched once per detail page: the season pills select on focus, so moving
@@ -180,10 +180,10 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
                 {cast.map(person => <PersonBubble key={person.id} person={person} onPress={onPerson} />)}
               </Shelf>
             )}
-            {!similar && !similarError && <CardsSkeleton title="More like this" count={CARDS_SHOWN} height={SIMILAR_H} />}
+            {!similar && !similarError && <PostersSkeleton title="More like this" count={POSTERS_SHOWN} height={SIMILAR_H} />}
             {similar?.length > 0 && (
               <Shelf title="More like this" height={SIMILAR_H}>
-                {similar.map(related => <CaptionedCard key={related.key} item={related} onPress={onOpen} />)}
+                {similar.map(related => <CaptionedPoster key={related.key} item={related} onPress={onOpen} />)}
               </Shelf>
             )}
           </View>

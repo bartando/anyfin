@@ -1,5 +1,5 @@
 import {ScrollView, View, motion} from '@ps5-react/core';
-import {CARD, CAST, px} from '../theme.js';
+import {CARD, CAST, POSTER, px} from '../theme.js';
 import {Shelf} from './Shelf.jsx';
 
 // Placeholders hold a loading row's exact space, so nothing below it moves when the row arrives.
@@ -42,6 +42,25 @@ export function CardsSkeleton({title, count, height}) {
             <View className="pt-1 gap-[6px]">
               <View className="h-[12px] w-[150px] rounded-full bg-panel" />
               <View className="h-[12px] w-[64px] rounded-full bg-panel" />
+            </View>
+          </View>
+        ))}
+      </Pulse>
+    </Shelf>
+  );
+}
+
+/** Posters with a centered title and year, as CaptionedPoster draws them. */
+export function PostersSkeleton({title, count, height}) {
+  return (
+    <Shelf title={title} height={height}>
+      <Pulse>
+        {tiles(count, index => (
+          <View key={index} className="gap-1">
+            <View className="rounded-xl bg-panel" style={{width: px(POSTER.w), height: px(POSTER.h)}} />
+            <View className="pt-1 gap-[6px] items-center">
+              <View className="h-[12px] w-[120px] rounded-full bg-panel" />
+              <View className="h-[12px] w-[48px] rounded-full bg-panel" />
             </View>
           </View>
         ))}
