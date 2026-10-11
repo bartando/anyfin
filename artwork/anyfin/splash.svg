@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="splash-title splash-description">
+  <title id="splash-title">Anyfin — Afterglow PS5 splash</title>
+  <desc id="splash-description">A luminous lavender jelly mascot above an Anyfin wordmark in Outfit with a capital A, lavender waterline and pearl-like i dot, centred on a dark plum 16:9 screen. Static PS5 launch artwork.</desc>
+  <defs>
+    <linearGradient id="jelly" gradientUnits="userSpaceOnUse" x1="370" y1="60" x2="514" y2="637">
+      <stop offset="0" stop-color="#FFF2FF" />
+      <stop offset="0.36" stop-color="#ECD8FF" />
+      <stop offset="0.75" stop-color="#C4A0FA" />
+      <stop offset="1" stop-color="#A879E8" />
+    </linearGradient>
+    <linearGradient id="pool" gradientUnits="userSpaceOnUse" x1="440" y1="526" x2="450" y2="640">
+      <stop stop-color="#CAA3ED" stop-opacity=".3" />
+      <stop offset="1" stop-color="#A775DA" stop-opacity=".7" />
+    </linearGradient>
+    <path id="jelly-shape" d="M309 193C328 164 338 146 342 124C347 95 338 79 322 63C306 47 313 31 335 29C373 23 417 44 451 70C485 95 510 136 535 170C559 184 579 195 597 207C650 238 680 283 697 345C710 392 714 426 736 456C758 484 765 506 755 532C744 569 720 590 691 594C659 600 626 586 603 575C594 570 589 571 581 580C549 608 507 610 466 595C453 590 447 595 439 605C412 629 373 636 335 629C296 625 268 612 251 594C245 587 240 586 229 593C204 605 177 603 155 590C129 575 120 553 123 524C125 496 137 475 154 455C178 427 188 405 193 370C198 316 215 269 249 235C269 216 290 205 309 193Z" />
+    <clipPath id="jelly-clip">
+      <use href="#jelly-shape" />
+    </clipPath>
+    <radialGradient id="aura">
+      <stop stop-color="#9C60FF" stop-opacity=".43" />
+      <stop offset=".58" stop-color="#8A45F0" stop-opacity=".2" />
+      <stop offset="1" stop-color="#7131D0" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="ground-glow">
+      <stop stop-color="#D6A4FF" stop-opacity=".42" />
+      <stop offset="1" stop-color="#AB77E5" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="glow-rim" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#E2C6FF" />
+      <stop offset=".45" stop-color="#EAD9FF" />
+      <stop offset="1" stop-color="#C385FA" />
+    </linearGradient>
+    <radialGradient id="inner-light">
+      <stop stop-color="#FDEFFF" stop-opacity=".56" />
+      <stop offset="1" stop-color="#FDEFFF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="splash-background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#211B2B" />
+      <stop offset=".48" stop-color="#15111E" />
+      <stop offset="1" stop-color="#0D0B12" />
+    </linearGradient>
+    <radialGradient id="splash-haze">
+      <stop stop-color="#7950A5" stop-opacity=".16" />
+      <stop offset=".52" stop-color="#643B8C" stop-opacity=".06" />
+      <stop offset="1" stop-color="#432458" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#splash-background)" />
+  <ellipse cx="960" cy="531" rx="760" ry="505" fill="url(#splash-haze)" />
+  <g id="afterglow" transform="translate(704 186)">
+    <ellipse cx="259" cy="321" rx="250" ry="234" fill="url(#aura)" />
+    <ellipse cx="260" cy="467" rx="175" ry="28" fill="url(#ground-glow)" />
+    <g transform="translate(-43 39) scale(.68)">
+      <use href="#jelly-shape" transform="translate(7 14)" fill="#35145E" opacity=".25" />
+      <use href="#jelly-shape" fill="url(#jelly)" stroke="url(#glow-rim)" stroke-width="6" />
+      <g clip-path="url(#jelly-clip)">
+        <path d="M110 514C153 555 214 568 247 550C292 592 381 607 437 576C485 597 549 592 581 565C640 585 720 566 770 507L790 660H100Z" fill="url(#pool)" />
+        <ellipse cx="445" cy="357" rx="197" ry="207" fill="url(#inner-light)" />
+        <path d="M261 245C229 279 214 317 209 353" fill="none" stroke="#EAFFF8" stroke-width="11" stroke-linecap="round" />
+        <path d="M671 296C687 329 692 365 699 396" fill="none" stroke="#FBC1F0" stroke-width="12" stroke-linecap="round" opacity=".88" />
+        <path d="M274 588C307 610 350 617 389 606" fill="none" stroke="#E1C4FF" stroke-width="8" stroke-linecap="round" />
+        <path d="M339 48C377 50 413 69 444 94" fill="none" stroke="#FFFDF8" stroke-width="15" stroke-linecap="round" />
+        <path d="M266 251C285 228 309 212 336 199" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" opacity=".92" />
+      </g>
+      <ellipse cx="395" cy="355" rx="27" ry="32" fill="#6338A4" />
+      <ellipse cx="614" cy="326" rx="22" ry="29" fill="#6338A4" />
+      <ellipse cx="402" cy="344" rx="6" ry="7" fill="#FFF6FF" />
+      <ellipse cx="619" cy="316" rx="5" ry="6" fill="#FFF6FF" />
+      <path d="M511 398L542 393" fill="none" stroke="#6338A4" stroke-width="13" stroke-linecap="round" />
+    </g>
+  </g>
+  <!-- wordmark:start -->
+  <g id="wordmark" fill="#F4ECFC" fill-rule="nonzero" aria-label="Anyfin" transform="translate(736.668 694.8) scale(.8)">
+<defs>
+    <linearGradient id="wordmark-wave" gradientUnits="userSpaceOnUse" x1="260" y1="88" x2="280" y2="175">
+      <stop stop-color="#D4D4FA"/>
+      <stop offset=".5" stop-color="#C3BAF2"/>
+      <stop offset="1" stop-color="#A995DF"/>
+    </linearGradient>
+    <radialGradient id="wordmark-bubble" gradientUnits="userSpaceOnUse" cx="428" cy="14" r="24">
+      <stop stop-color="#F4FEFF"/>
+      <stop offset=".4" stop-color="#CCEAF8"/>
+      <stop offset=".76" stop-color="#B6B3F0"/>
+      <stop offset="1" stop-color="#9577D4"/>
+    </radialGradient>
+    <pattern id="wordmark-flow" patternUnits="userSpaceOnUse" width="560" height="188">
+      <rect width="560" height="188" fill="#F4ECFC"/>
+      <path d="M0 112C80 89 139 87 206 103S345 126 407 102S500 90 560 104V188H0Z" fill="url(#wordmark-wave)"/>
+      <path d="M0 112C80 89 139 87 206 103S345 126 407 102S500 90 560 104" fill="none" stroke="#ECFAFF" stroke-width="1.4" opacity=".55"/>
+      <ellipse cx="433.605" cy="19.61" rx="13.275" ry="13.5" fill="url(#wordmark-bubble)"/>
+      <path d="M425.6 18.5C426.1 14.3 429.1 11.8 432.2 11.1" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
+    </pattern>
+  </defs>
+    <path data-letter="A" fill="url(#wordmark-flow)" d="M12.0 134.0 63.075 7.46H83.055L133.725 134.0H107.625L68.43 30.23H77.34L37.65 134.0H12.0ZM39.09 110.375V89.855H107.085V110.375H39.09Z" />
+    <path data-letter="n" fill="url(#wordmark-flow)" d="M203.88 134.0V84.185Q203.88 76.4 199.02 71.518Q194.16 66.635 186.588 66.635Q181.436 66.635 177.47 68.84Q173.505 71.045 171.278 75.028Q169.05 79.01 169.05 84.185L159.825 79.415Q159.825 69.29 164.257 61.618Q168.69 53.945 176.506 49.603Q184.322 45.26 194.213 45.26Q203.835 45.26 211.373 50.03Q218.91 54.8 223.23 62.495Q227.55 70.19 227.55 78.92V134.0H203.88ZM145.38 134.0V47.06H169.05V134.0H145.38Z" />
+    <path data-letter="y" fill="url(#wordmark-flow)" d="M272.865 134.675 236.46 47.06H262.155L286.185 113.975H277.59L302.61 47.06H328.395L289.605 134.675H272.865ZM248.745 170.45 275.295 114.47 289.605 134.675 273.855 170.45H248.745Z" />
+    <path data-letter="f" fill="url(#wordmark-flow)" d="M353.46 134.0V37.655Q353.46 27.35 358.027 19.318Q362.595 11.285 370.853 6.627Q379.11 1.97 390.18 1.97Q398.64 1.97 404.782 4.805Q410.925 7.64 415.875 12.77L400.845 27.8Q398.91 25.82 396.525 24.718Q394.14 23.615 390.63 23.615Q384.195 23.615 380.663 27.148Q377.13 30.68 377.13 37.115V134.0H353.46ZM333.435 67.76V47.06H402.78V67.76H333.435Z" />
+    <path data-letter="i" fill="url(#wordmark-flow)" d="M421.77 134.0V47.06H445.44V134.0H421.77ZM433.605 33.11Q427.89 33.11 424.11 29.218Q420.33 25.325 420.33 19.61Q420.33 13.895 424.11 10.002Q427.89 6.11 433.605 6.11Q439.5 6.11 443.19 10.002Q446.88 13.895 446.88 19.61Q446.88 25.325 443.19 29.218Q439.5 33.11 433.605 33.11Z" />
+    <path data-letter="n" fill="url(#wordmark-flow)" d="M522.66 134.0V84.185Q522.66 76.4 517.8 71.518Q512.94 66.635 505.368 66.635Q500.216 66.635 496.25 68.84Q492.285 71.045 490.057 75.028Q487.83 79.01 487.83 84.185L478.605 79.415Q478.605 69.29 483.037 61.618Q487.47 53.945 495.286 49.603Q503.102 45.26 512.993 45.26Q522.615 45.26 530.152 50.03Q537.69 54.8 542.01 62.495Q546.33 70.19 546.33 78.92V134.0H522.66ZM464.16 134.0V47.06H487.83V134.0H464.16Z" />
+  </g>
+  <!-- wordmark:end -->
+</svg>

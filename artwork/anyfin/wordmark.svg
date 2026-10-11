@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="188" viewBox="0 0 560 188" role="img" aria-labelledby="wordmark-title wordmark-description">
+  <title id="wordmark-title">Anyfin — Outfit with a liquid colour sweep</title>
+  <desc id="wordmark-description">Capitalized Outfit lettering with a flowing lavender colour line through the lower letters and a small pearlescent bubble as the i dot.</desc>
+  <defs>
+    <linearGradient id="wordmark-wave" gradientUnits="userSpaceOnUse" x1="260" y1="88" x2="280" y2="175">
+      <stop stop-color="#D4D4FA"/>
+      <stop offset=".5" stop-color="#C3BAF2"/>
+      <stop offset="1" stop-color="#A995DF"/>
+    </linearGradient>
+    <radialGradient id="wordmark-bubble" gradientUnits="userSpaceOnUse" cx="428" cy="14" r="24">
+      <stop stop-color="#F4FEFF"/>
+      <stop offset=".4" stop-color="#CCEAF8"/>
+      <stop offset=".76" stop-color="#B6B3F0"/>
+      <stop offset="1" stop-color="#9577D4"/>
+    </radialGradient>
+    <pattern id="wordmark-flow" patternUnits="userSpaceOnUse" width="560" height="188">
+      <rect width="560" height="188" fill="#F4ECFC"/>
+      <path d="M0 112C80 89 139 87 206 103S345 126 407 102S500 90 560 104V188H0Z" fill="url(#wordmark-wave)"/>
+      <path d="M0 112C80 89 139 87 206 103S345 126 407 102S500 90 560 104" fill="none" stroke="#ECFAFF" stroke-width="1.4" opacity=".55"/>
+      <ellipse cx="433.605" cy="19.61" rx="13.275" ry="13.5" fill="url(#wordmark-bubble)"/>
+      <path d="M425.6 18.5C426.1 14.3 429.1 11.8 432.2 11.1" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
+    </pattern>
+  </defs>
+  <g fill-rule="nonzero">
+    <path data-letter="A" fill="url(#wordmark-flow)" d="M12.0 134.0 63.075 7.46H83.055L133.725 134.0H107.625L68.43 30.23H77.34L37.65 134.0H12.0ZM39.09 110.375V89.855H107.085V110.375H39.09Z" />
+    <path data-letter="n" fill="url(#wordmark-flow)" d="M203.88 134.0V84.185Q203.88 76.4 199.02 71.518Q194.16 66.635 186.588 66.635Q181.436 66.635 177.47 68.84Q173.505 71.045 171.278 75.028Q169.05 79.01 169.05 84.185L159.825 79.415Q159.825 69.29 164.257 61.618Q168.69 53.945 176.506 49.603Q184.322 45.26 194.213 45.26Q203.835 45.26 211.373 50.03Q218.91 54.8 223.23 62.495Q227.55 70.19 227.55 78.92V134.0H203.88ZM145.38 134.0V47.06H169.05V134.0H145.38Z" />
+    <path data-letter="y" fill="url(#wordmark-flow)" d="M272.865 134.675 236.46 47.06H262.155L286.185 113.975H277.59L302.61 47.06H328.395L289.605 134.675H272.865ZM248.745 170.45 275.295 114.47 289.605 134.675 273.855 170.45H248.745Z" />
+    <path data-letter="f" fill="url(#wordmark-flow)" d="M353.46 134.0V37.655Q353.46 27.35 358.027 19.318Q362.595 11.285 370.853 6.627Q379.11 1.97 390.18 1.97Q398.64 1.97 404.782 4.805Q410.925 7.64 415.875 12.77L400.845 27.8Q398.91 25.82 396.525 24.718Q394.14 23.615 390.63 23.615Q384.195 23.615 380.663 27.148Q377.13 30.68 377.13 37.115V134.0H353.46ZM333.435 67.76V47.06H402.78V67.76H333.435Z" />
+    <path data-letter="i" fill="url(#wordmark-flow)" d="M421.77 134.0V47.06H445.44V134.0H421.77ZM433.605 33.11Q427.89 33.11 424.11 29.218Q420.33 25.325 420.33 19.61Q420.33 13.895 424.11 10.002Q427.89 6.11 433.605 6.11Q439.5 6.11 443.19 10.002Q446.88 13.895 446.88 19.61Q446.88 25.325 443.19 29.218Q439.5 33.11 433.605 33.11Z" />
+    <path data-letter="n" fill="url(#wordmark-flow)" d="M522.66 134.0V84.185Q522.66 76.4 517.8 71.518Q512.94 66.635 505.368 66.635Q500.216 66.635 496.25 68.84Q492.285 71.045 490.057 75.028Q487.83 79.01 487.83 84.185L478.605 79.415Q478.605 69.29 483.037 61.618Q487.47 53.945 495.286 49.603Q503.102 45.26 512.993 45.26Q522.615 45.26 530.152 50.03Q537.69 54.8 542.01 62.495Q546.33 70.19 546.33 78.92V134.0H522.66ZM464.16 134.0V47.06H487.83V134.0H464.16Z" />
+  </g>
+</svg>
