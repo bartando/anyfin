@@ -1,14 +1,20 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {FocusScope, Text, View, Video, motion, transitions, useFocus, useNavigationEvents} from '@ps5-react/core';
 import {loadEpisodeAfter} from '../lib/jellyfin/library.js';
-import {reportProgress, reportStart, reportStopped, startPlayback} from '../lib/jellyfin/playback.js';
-import {rememberUpscaler, upscalerFor} from '../lib/playerPrefs.js';
+import {loadMarkers, reportProgress, reportStart, reportStopped, startPlayback} from '../lib/jellyfin/playback.js';
+import {skippable} from '../lib/jellyfin/markers.js';
+import {autoplayFor, rememberAutoplay, rememberUpscaler, upscalerFor} from '../lib/playerPrefs.js';
 import {getSettings, useSettings} from '../lib/settings.js';
 import {PlayerHeader} from '../components/player/PlayerHeader.jsx';
 import {PlayerTitle} from '../components/player/PlayerTitle.jsx';
 import {Scrubber} from '../components/player/Scrubber.jsx';
 import {OptionsPanel} from '../components/player/OptionsPanel.jsx';
+import {SkipPrompt} from '../components/player/SkipPrompt.jsx';
+import {UpNext} from '../components/player/UpNext.jsx';
 import {optionTabs} from '../components/player/options.js';
+import {usePadButton} from '../components/player/usePadButton.js';
+import {useTriggerSeek} from '../components/player/useTriggerSeek.js';
+import {useUpNext} from '../components/player/useUpNext.js';
 import {PauseIcon} from '../components/Icons.jsx';
 
 // The controls fade out this long after the last input while the film plays.
@@ -34,9 +40,12 @@ function SubtitleLine({size, children}) {
 /**
  * The film, full screen. The bar is where focus rests: Left and Right seek, X pauses, Up reaches Back,
  * Audio & Subtitles and Next Episode. The options panel (Square or Options) has the tracks, the version
- * and quality, the upscaler and what is playing. L1/R1 jump a minute, L2/R2 the step from Settings,
- * Triangle cycles the subtitles. Circle first brings the hidden controls back, then leaves. The position
- * goes to the server as it plays, so Continue Watching and other devices pick up where this one stopped.
+ * and quality, the upscaler, autoplay and what is playing. L1/R1 jump a minute; L2/R2 tapped jump the
+ * step from Settings and held scrub (useTriggerSeek). Triangle cycles the subtitles. During an intro or
+ * recap the touchpad skips it; over the credits of an episode the next one is offered and, with
+ * autoplay, starts. Circle first puts that offer away, then brings the hidden controls back, then
+ * leaves. The position goes to the server as it plays, so Continue Watching and other devices pick up
+ * where this one stopped.
  */
 export function PlayerPage({item, active = true, onClose, onNext}) {
   const video = useRef(null);
@@ -55,8 +64,11 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   const subtitleChosen = useRef(false);
   const [upscale, setUpscale] = useState(() => upscalerFor(item));
   const [next, setNext] = useState(null);
+  const [markers, setMarkers] = useState(null);
   const [panel, setPanel] = useState(null);
   const [pending, setPending] = useState(null);
+  const [rate, setRate] = useState(0);
+  const [seriesAutoplay, setSeriesAutoplay] = useState(() => autoplayFor(item));
   const position = useRef(0);
   const seekingTo = useRef(null);
   const reported = useRef(0);
@@ -83,6 +95,12 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     return () => { live = false; };
   }, [item.id]);
 
+  useEffect(() => {
+    let live = true;
+    loadMarkers(item).then(found => live && setMarkers(found), () => {});
+    return () => { live = false; };
+  }, [item.id]);
+
   // Started, progress while playing, stopped on the way out (or to another stream) with the last position.
   useEffect(() => {
     if (!playback) return undefined;
@@ -100,13 +118,14 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     setShown(true);
   }, []);
   useEffect(wake, [paused]);
+  const offered = useRef(false);
   useEffect(() => {
     if (paused || error || panel || pending != null) return undefined;
     const id = setInterval(() => {
       if (!visible.current || Date.now() < hideAt.current) return;
       visible.current = false;
       setShown(false);
-      focus('player-bar');
+      focus(offered.current ? 'player-upnext' : 'player-bar');
     }, 500);
     return () => clearInterval(id);
   }, [paused, error, panel, pending]);
@@ -120,15 +139,15 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     video.current?.seek(clamped);
   };
 
-  // Left/Right on the bar: one seek per streak of presses, to where they added up.
+  // Left/Right on the bar and the triggers move one target, sought once they settle on it.
   const scrub = useRef({target: null, streak: 0, last: 0, timer: 0});
-  const nudge = direction => {
-    const s = scrub.current, now = Date.now();
-    s.streak = now - s.last < STREAK_MS ? s.streak + 1 : 0;
-    s.last = now;
-    const end = status.duration || Infinity;
-    s.target = Math.max(0, Math.min((s.target ?? position.current) + direction * seekStep(s.streak), end - 1));
+  const moveTarget = seconds => {
+    const s = scrub.current, end = status.duration || Infinity;
+    s.target = Math.max(0, Math.min((s.target ?? position.current) + seconds, end - 1));
     setPending(s.target);
+  };
+  const settle = () => {
+    const s = scrub.current;
     clearTimeout(s.timer);
     s.timer = setTimeout(() => {
       seekTo(s.target);
@@ -136,7 +155,31 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
       setPending(null);
     }, SEEK_SETTLE_MS);
   };
+  const nudge = direction => {
+    const s = scrub.current, now = Date.now();
+    s.streak = now - s.last < STREAK_MS ? s.streak + 1 : 0;
+    s.last = now;
+    moveTarget(direction * seekStep(s.streak));
+    settle();
+  };
   useEffect(() => () => clearTimeout(scrub.current.timer), []);
+  useTriggerSeek({
+    enabled: active && !!playback && !panel, feedback: settings.triggerFeedback,
+    onTap: direction => {
+      moveTarget(direction * settings.seekStep);
+      settle();
+    },
+    onScrub: (seconds, speed) => {
+      clearTimeout(scrub.current.timer);
+      moveTarget(seconds);
+      setRate(speed);
+      wake();
+    },
+    onRelease: () => {
+      setRate(0);
+      settle();
+    },
+  });
 
   useNavigationEvents(event => {
     if (!active) return;
@@ -186,6 +229,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   };
   const subtitleOrder = [-1, ...(playback?.subtitles.options ?? []).map(option => option.track)];
   const restart = change => setRequest(was => ({...was, ...change, startSeconds: position.current}));
+  const autoplay = seriesAutoplay ?? settings.autoplay;
   const pick = {
     audio: index => video.current?.selectAudioTrack(index),
     subtitles: chooseSubtitles,
@@ -195,13 +239,37 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
       setUpscale(model);
       rememberUpscaler(item, model);
     },
+    autoplay: id => {
+      const on = id === 'default' ? undefined : id === 'on';
+      setSeriesAutoplay(on);
+      rememberAutoplay(item, on);
+    },
   };
+
+  // The intro or recap playing now, skipped to its end by the touchpad or its button.
+  const skip = !panel && !error ? skippable(markers, status.position) : null;
+  const skipNow = () => {
+    if (skip) seekTo(skip.end);
+  };
+  usePadButton('touchpad', active && !!skip, skipNow);
+  useEffect(() => {
+    if (!skip && focused.current === 'player-skip') focus('player-bar');
+  }, [!!skip]);
+
+  const upNext = useUpNext({next, onNext, onClose, position: status.position, duration: status.duration,
+    outro: markers?.outro, autoplay, holding: paused || pending != null || !!panel});
+  const offering = upNext.offering && !panel && !error;
+  // The card takes focus as it comes up, so X plays the next episode; it gives it back as it goes.
+  useEffect(() => {
+    if (offering && !offered.current) focus('player-upnext');
+    else if (!offering && offered.current && focused.current === 'player-upnext') focus('player-bar');
+    offered.current = offering;
+  }, [offering]);
 
   const onAction = action => {
     if (action === 'l1') seekTo(position.current - 60);
     else if (action === 'r1') seekTo(position.current + 60);
-    else if (action === 'l2') seekTo(position.current - settings.seekStep);
-    else if (action === 'r2') seekTo(position.current + settings.seekStep);
+    else if (action === 'l2' || action === 'r2') { /* useTriggerSeek takes the triggers from controller events */ }
     else if (action === 'triangle') chooseSubtitles(subtitleOrder[(subtitleOrder.indexOf(subtitleTrack) + 1) % subtitleOrder.length]);
     else if (action === 'square') openPanel();
     else if (action === 'options') (panel ? closePanel() : openPanel());
@@ -209,11 +277,13 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     return true;
   };
   const onBack = () => {
-    if (!visible.current) wake();
+    if (offering) {
+      upNext.dismiss();
+      focus('player-bar');
+    } else if (!visible.current) wake();
     else onClose();
     return true;
   };
-  const onEnd = () => (next && onNext ? onNext(next) : onClose());
 
   const waiting = !error && (!playback || status.state === 'loading' || status.state === 'buffering');
   const controls = shown || paused || !!error || !!panel;
@@ -227,7 +297,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
             upscale={upscale || false} audioDelay={settings.audioDelay} subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack}
             onSubtitle={setSubtitle} className="absolute inset-0" onProgress={onProgress}
             onStatus={s => setStatus(was => ({...was, state: s.state}))}
-            onEnd={onEnd} onError={({error: failed}) => setError(failed)} />
+            onEnd={upNext.finish} onError={({error: failed}) => setError(failed)} />
         )}
         {!!subtitle && !error && (
           <View className={`absolute left-0 right-0 items-center ${controls ? 'bottom-[316px]' : 'bottom-[56px]'}`}>
@@ -265,13 +335,20 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
           animate={{opacity: controls ? 1 : 0}} transition={transitions.panel}>
           <PlayerTitle item={item} position={status.position} duration={status.duration} dim={pending != null} />
           <Scrubber position={status.position} duration={status.duration} buffered={status.buffered}
-            pending={pending} onPress={togglePause} />
+            pending={pending} rate={rate} onPress={togglePause} />
         </motion.View>
+        {(skip || offering) && (
+          <View className={`absolute right-12 ${controls ? 'bottom-[316px]' : 'bottom-[48px]'}`}>
+            {offering ? <UpNext next={next} seconds={upNext.seconds} onPlay={upNext.play} />
+              : <SkipPrompt kind={skip.kind} onPress={skipNow} />}
+          </View>
+        )}
         {panel && playback && (
           <>
             <View className="absolute inset-0 bg-black/50" />
             <OptionsPanel tab={panel} onTab={setPanel} onClose={closePanel}
-              tabs={optionTabs({playback, status: live, subtitleTrack, upscale, pick})} />
+              tabs={optionTabs({playback, status: live, subtitleTrack, upscale, pick,
+                autoplay: item.kind === 'episode' ? {series: seriesAutoplay} : null})} />
           </>
         )}
       </View>

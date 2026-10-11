@@ -10,19 +10,20 @@ const BAR_W = SCREEN.w - 2 * 48, TAG_W = 240;
 /**
  * The seek bar, the only focusable element in its row: Left and Right find nothing to move to, and
  * the player turns them into seeks. X pauses. `pending` is where a seek still being chosen lands: the
- * stretch it skips lights up and its time and distance show over where it ends.
+ * stretch it skips lights up and its time and distance show over where it ends; `rate`, while a
+ * trigger scrubs, how fast it moves there (film seconds a second).
  */
-export function Scrubber({position, duration, buffered, pending, onPress}) {
+export function Scrubber({position, duration, buffered, pending, rate, onPress}) {
   // Closing the player with the bar focused may never blur it.
   useEffect(() => () => setQuietEdges(false), []);
   return (
     <View focusKey="player-bar" onPress={onPress} onFocus={() => setQuietEdges(true)} onBlur={() => setQuietEdges(false)}>
-      <Bar position={position} duration={duration} buffered={buffered} pending={pending} />
+      <Bar position={position} duration={duration} buffered={buffered} pending={pending} rate={rate} />
     </View>
   );
 }
 
-function Bar({position, duration, buffered, pending}) {
+function Bar({position, duration, buffered, pending, rate}) {
   const focused = useIsFocused();
   const fraction = value => (duration > 0 ? Math.min(1, Math.max(0, value / duration)) : 0);
   const played = fraction(position);
@@ -40,7 +41,9 @@ function Bar({position, duration, buffered, pending}) {
             <View className="absolute flex-row items-end justify-center gap-3 bottom-[16px]"
               style={{left: px(Math.min(Math.max(target * BAR_W - TAG_W / 2, 0), BAR_W - TAG_W)), width: px(TAG_W)}}>
               <Text className="font-semi text-lg text-white">{clock(pending)}</Text>
-              <Text className="font-semi text-md text-accent-soft">{signed(pending - position)}</Text>
+              <Text className="font-semi text-md text-accent-soft">
+                {signed(pending - position)}{rate > 0 ? `  ${Math.round(rate)}×` : ''}
+              </Text>
             </View>
           </>
         )}
