@@ -2,6 +2,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocus}
   from '@ps5-react/core';
 import {useInterfaceSounds} from './sounds.js';
+import {useMoveTracking} from './lib/lastMove.js';
 import {LaunchIntro} from './components/LaunchIntro.jsx';
 import {useSession} from './lib/jellyfin/session.js';
 import {LIBRARIES, hideFromResume, loadHome} from './lib/jellyfin/library.js';
@@ -54,6 +55,7 @@ const STACK_MAX = 30;
 /** Signed out: the sign-in screen. Signed in: the app, started fresh for each session. */
 function App() {
   useInterfaceSounds();
+  useMoveTracking();
   const session = useSession();
   const [launched, setLaunched] = useState(false);
   const finishLaunch = useCallback(() => setLaunched(true), []);
