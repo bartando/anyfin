@@ -1,18 +1,15 @@
+import {getSettings} from '../../lib/settings.js';
+import {UPSCALERS} from '../../lib/upscalers.js';
+
 // What the options panel lists, from the server's playback info and the player's status.
 
-export const UPSCALERS = [
-  {id: '', label: 'Off', detail: 'Plain scaling'},
-  {id: 'artcnn', label: 'ArtCNN', detail: 'Sharp lines, light'},
-  {id: 'anime4k-s', label: 'Anime4K S'},
-  {id: 'anime4k-m', label: 'Anime4K M'},
-  {id: 'anime4k-l', label: 'Anime4K L'},
-  {id: 'anime4k-vl', label: 'Anime4K VL', detail: 'Heavy'},
-  {id: 'anime4k-ul', label: 'Anime4K UL', detail: 'Heaviest'},
-];
+const UPSCALE_OPTIONS = UPSCALERS.map(u => ({id: u.id, label: u.name, detail: u.badge ?? (u.gpuMs ? `${u.gpuMs} ms` : '')}));
 
-// Bits per second; 0 asks for the file as it is.
+const mbps = bits => `${Math.round(bits / 1e6)} Mbps`;
+
+// Bits per second; 0 follows Settings.
 const QUALITIES = [
-  {id: 0, label: 'Original', detail: 'No transcoding'},
+  {id: 160e6, label: 'Original', detail: 'No transcoding'},
   {id: 40e6, label: '40 Mbps'},
   {id: 20e6, label: '20 Mbps'},
   {id: 10e6, label: '10 Mbps'},
@@ -35,6 +32,11 @@ function audioOption(playback, track, at) {
   if (named) return {id: track.index, ...split(named)};
   return {id: track.index, label: track.language || track.title || `Track ${at + 1}`,
     detail: [(track.codec ?? '').toUpperCase(), channels(track.channels)].filter(Boolean).join(' · ')};
+}
+
+function qualities() {
+  const cap = getSettings().maxBitrate;
+  return [{id: 0, label: 'Default', detail: cap >= 160e6 ? 'Original, from Settings' : `${mbps(cap)}, from Settings`}, ...QUALITIES];
 }
 
 function upscaleNote(status) {
@@ -76,11 +78,11 @@ export function optionTabs({playback, status, subtitleTrack, upscale, pick}) {
         id: v.id, label: v.named ? v.name : v.video || v.name,
         detail: [v.direct ? 'Direct' : 'Transcode', !v.named && v.gigabytes ? `${v.gigabytes.toFixed(1)} GB` : ''].filter(Boolean).join(' · '),
       }))},
-      {title: 'QUALITY', selected: playback.maxBitrate ?? 0, onPick: pick.quality, options: QUALITIES,
+      {title: 'QUALITY', selected: playback.maxBitrate ?? 0, onPick: pick.quality, options: qualities(),
         note: `Playing: ${(METHODS[playback.playMethod] ?? playback.playMethod).toLowerCase()}.`},
     ]},
     {id: 'upscale', label: 'Upscaling', sections: [
-      {title: 'UPSCALING · FOR ANIMATION', selected: upscale, onPick: pick.upscale, options: UPSCALERS, note: upscaleNote(status)},
+      {title: 'UPSCALING · FOR ANIMATION', selected: upscale, onPick: pick.upscale, options: UPSCALE_OPTIONS, note: upscaleNote(status)},
     ]},
     {id: 'info', label: 'Info', facts: facts(playback, status)},
   ];

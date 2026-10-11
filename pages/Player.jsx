@@ -3,6 +3,7 @@ import {FocusScope, Text, View, Video, motion, transitions, useFocus, useNavigat
 import {loadEpisodeAfter} from '../lib/jellyfin/library.js';
 import {reportProgress, reportStart, reportStopped, startPlayback} from '../lib/jellyfin/playback.js';
 import {rememberUpscaler, upscalerFor} from '../lib/playerPrefs.js';
+import {getSettings, useSettings} from '../lib/settings.js';
 import {PlayerHeader} from '../components/player/PlayerHeader.jsx';
 import {Scrubber} from '../components/player/Scrubber.jsx';
 import {OptionsPanel} from '../components/player/OptionsPanel.jsx';
@@ -21,16 +22,24 @@ const seekStep = streak => (streak < 4 ? 10 : streak < 12 ? 30 : 60);
 // lands the seek short of it.
 const SEEK_LAND_MS = 2500;
 
+// Class names are compiled at build time, so each size is its own element.
+function SubtitleLine({size, children}) {
+  if (size === 'small') return <Text className="font-semi text-md text-white">{children}</Text>;
+  if (size === 'large') return <Text className="font-semi text-xl text-white">{children}</Text>;
+  return <Text className="font-semi text-lg text-white">{children}</Text>;
+}
+
 /**
  * The film, full screen. The bar is where focus rests: Left and Right seek, X pauses, Up reaches Back,
- * Audio & Subtitles and Next Episode. The options panel (Square) has the tracks, the version and
- * quality, the upscaler and what is playing. L1/R1 jump a minute, L2/R2 ten seconds, Triangle cycles
- * the subtitles. Circle first brings the hidden controls back, then leaves. The position goes to the
- * server as it plays, so Continue Watching and other devices pick up where this one stopped.
+ * Audio & Subtitles and Next Episode. The options panel (Square) has the tracks, the version
+ * and quality, the upscaler and what is playing. L1/R1 jump a minute, L2/R2 the step from Settings,
+ * Triangle cycles the subtitles. Circle first brings the hidden controls back, then leaves. The position
+ * goes to the server as it plays, so Continue Watching and other devices pick up where this one stopped.
  */
 export function PlayerPage({item, active = true, onClose, onNext}) {
   const video = useRef(null);
   const {focus, focusedKey} = useFocus();
+  const settings = useSettings();
   const focused = useRef(focusedKey);
   focused.current = focusedKey;
 
@@ -60,7 +69,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     startPlayback(item, request).then(found => {
       if (!live) return;
       setPlayback(found);
-      setSubtitleTrack(current => (subtitleChosen.current ? current : found.subtitles.preferred));
+      if (!subtitleChosen.current) setSubtitleTrack(getSettings().subtitles === 'off' ? -1 : found.subtitles.preferred);
     }, failed => live && setError(failed.message));
     return () => { live = false; };
   }, [item.id, request]);
@@ -189,8 +198,8 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   const onAction = action => {
     if (action === 'l1') seekTo(position.current - 60);
     else if (action === 'r1') seekTo(position.current + 60);
-    else if (action === 'l2') seekTo(position.current - 10);
-    else if (action === 'r2') seekTo(position.current + 10);
+    else if (action === 'l2') seekTo(position.current - settings.seekStep);
+    else if (action === 'r2') seekTo(position.current + settings.seekStep);
     else if (action === 'triangle') chooseSubtitles(subtitleOrder[(subtitleOrder.indexOf(subtitleTrack) + 1) % subtitleOrder.length]);
     else if (action === 'square') openPanel();
     else return false;
@@ -212,7 +221,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
       <View className="w-screen h-screen bg-black">
         {playback && (
           <Video key={playback.url} ref={video} source={playback.url} paused={paused} startTime={playback.startSeconds}
-            upscale={upscale || false} subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack}
+            upscale={upscale || false} audioDelay={settings.audioDelay} subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack}
             onSubtitle={setSubtitle} className="absolute inset-0" onProgress={onProgress}
             onStatus={s => setStatus(was => ({...was, state: s.state}))}
             onEnd={onEnd} onError={({error: failed}) => setError(failed)} />
@@ -221,7 +230,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
           <View className={`absolute left-0 right-0 items-center ${controls ? 'bottom-[150px]' : 'bottom-[56px]'}`}>
             <View className="px-5 py-2 rounded-xl bg-black/55 items-center">
               {subtitle.split('\n').map((line, index) => (
-                <Text key={index} className="font-semi text-lg text-white">{line}</Text>
+                <SubtitleLine key={index} size={settings.subtitleSize}>{line}</SubtitleLine>
               ))}
             </View>
           </View>

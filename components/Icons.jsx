@@ -113,3 +113,21 @@ export const NextEpisodeIcon = ({size = 18, color = '#ffffff'}) => (
     <Path d="M17 4.5h2.5v15H17z" fill={color} />
   </Icon>
 );
+
+// Eight teeth around the hub: each a step out to the tooth radius and back.
+const GEAR = (() => {
+  const points = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    for (const [da, r] of [[-0.24, 7], [-0.15, 9.6], [0.15, 9.6], [0.24, 7]])
+      points.push(`${(12 + r * Math.cos(a + da)).toFixed(2)} ${(12 + r * Math.sin(a + da)).toFixed(2)}`);
+  }
+  return `M${points.join('L')}Z`;
+})();
+
+export const GearIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d={GEAR} fill="none" stroke={color} strokeWidth="1.9" strokeLinejoin="round" />
+    <Circle cx="12" cy="12" r="3" fill="none" stroke={color} strokeWidth="1.9" />
+  </Icon>
+);

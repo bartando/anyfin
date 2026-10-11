@@ -16,7 +16,7 @@ import {DetailPage} from './pages/Detail.jsx';
 import {PlayerPage} from './pages/Player.jsx';
 import {PersonPage} from './pages/Person.jsx';
 import {CollectionPage} from './pages/Collection.jsx';
-import {AccountPage} from './pages/Account.jsx';
+import {SettingsPage} from './pages/Settings.jsx';
 import {ConnectPage} from './pages/Connect.jsx';
 
 const LABELS = ['Home', 'Movies', 'TV Shows', 'Collections', 'Search'];
@@ -110,7 +110,7 @@ function Main({session, active}) {
     setTab(index);
     setHomeY(0);
   }, []);
-  const openAccount = useCallback(() => push({type: 'account'}), []);
+  const openSettings = useCallback(section => push({type: 'settings', section}), []);
   const play = useCallback(item => {
     if (item.kind === 'tv') {
       setToast({id: Date.now(), text: `Pick an episode of ${item.title} to play`});
@@ -146,7 +146,8 @@ function Main({session, active}) {
             </Screen>
           </Screens>
           <TopBar labels={LABELS} active={tab} onSelect={select} onEnter={() => focus('content')}
-            downTo={DOWN_TO} y={tab === 0 ? homeY : 0} onAccount={openAccount}
+            downTo={DOWN_TO} y={tab === 0 ? homeY : 0} onAccount={() => openSettings('account')}
+            onSettings={() => openSettings('playback')}
             user={{name: session.userName, image: session.userImage}} />
         </View>
       </FocusScope>
@@ -163,8 +164,8 @@ function Main({session, active}) {
                 <PersonPage person={page.person} active={top} onClose={back} onOpen={open} onPerson={openPerson} />
               ) : page.type === 'player' ? (
                 <PlayerPage item={page.item} active={top} onClose={back} onNext={playNext} />
-              ) : page.type === 'account' ? (
-                <AccountPage session={session} active={top} onClose={back} />
+              ) : page.type === 'settings' ? (
+                <SettingsPage session={session} section={page.section} active={top} onClose={back} />
               ) : (
                 <CollectionPage collection={page.collection} active={top} onClose={back} onOpen={open} />
               )}
