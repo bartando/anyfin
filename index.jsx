@@ -1,10 +1,10 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocus}
   from '@ps5-react/core';
 import {useInterfaceSounds} from './sounds.js';
 import {LaunchIntro} from './components/LaunchIntro.jsx';
 import {useSession} from './lib/jellyfin/session.js';
-import {LIBRARIES, loadHome} from './lib/jellyfin/library.js';
+import {LIBRARIES, hideFromResume, loadHome} from './lib/jellyfin/library.js';
 import {useLoad} from './lib/useLoad.js';
 import {getFlag, toggleFavorite, togglePlayed, useFavoritesVersion} from './lib/favorites.js';
 import {focusedCard} from './lib/focusedCard.js';
@@ -80,7 +80,12 @@ function Main({session, active}) {
   const [toast, setToast] = useState(null);
   const [homeY, setHomeY] = useState(0);
   const favoritesVersion = useFavoritesVersion();
-  const {data: home, error: homeError} = useLoad(session.token, loadHome);
+  const {data: loaded, error: homeError} = useLoad(session.token, loadHome);
+  // Titles taken off Continue Watching leave the row at once; Home loads its rows only once.
+  const [unresumed, setUnresumed] = useState(() => new Set());
+  const home = useMemo(() => (loaded && unresumed.size ? {...loaded, rows: loaded.rows
+    .map(row => (row.id === 'resume' ? {...row, items: row.items.filter(item => !unresumed.has(item.id))} : row))
+    .filter(row => row.items.length)} : loaded), [loaded, unresumed]);
   const {focus, focusedRect} = useFocus();
   const [menu, setMenu] = useState(null);
   const started = useRef(false);
@@ -127,6 +132,20 @@ function Main({session, active}) {
     if (id === 'play') play(item);
     else if (id === 'restart') play({...item, positionSeconds: 0, positionMinutes: 0});
     else if (id === 'info') openFavorite(item);
+    else if (id === 'unresume') {
+      const keep = on => setUnresumed(was => {
+        const next = new Set(was);
+        if (on) next.add(item.id);
+        else next.delete(item.id);
+        return next;
+      });
+      keep(true);
+      say('Removed from Continue Watching');
+      hideFromResume(item.id).catch(error => {
+        keep(false);
+        say(`Could not remove it: ${error.message}`);
+      });
+    }
     else if (id === 'watched') {
       say(getFlag(item, 'played') ? 'Marked as unwatched' : 'Marked as watched');
       togglePlayed(item);

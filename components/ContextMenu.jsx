@@ -3,11 +3,18 @@ import {SCREEN, px} from '../theme.js';
 import {clean} from '../lib/format.js';
 import {caption, cardTitle} from '../lib/jellyfin/items.js';
 import {useIsFavorite, useIsPlayed} from '../lib/favorites.js';
-import {CheckIcon, HeartFilledIcon, HeartIcon, InfoIcon, PlayIcon, RestartIcon} from './Icons.jsx';
+import {CheckIcon, CloseIcon, HeartFilledIcon, HeartIcon, InfoIcon, PlayIcon, RestartIcon} from './Icons.jsx';
 
 // Logical px. The height is worked out from the rows, so the menu can be placed before it lays out; a
 // title longer than TITLE_CHARS takes a second line.
 const W = 300, GAP = 20, MARGIN = 32, HEADER = 62, TITLE_LINE = 27, TITLE_CHARS = 24, ROW = 48, PAD = 8;
+
+// An episode opens its series at its season.
+function goTo(item) {
+  if (item.kind !== 'episode') return 'Details';
+  if (item.season === 0) return 'Go to Specials';
+  return item.season != null ? `Go to Season ${item.season}` : 'Go to series';
+}
 
 /** What Triangle offers for `item`; ids are what `onPick` gets. */
 function entries(item, played, favorite) {
@@ -17,10 +24,11 @@ function entries(item, played, favorite) {
     list.push({id: 'play', label: resume ? `Resume ${item.positionMinutes} min` : 'Play', icon: PlayIcon});
     if (resume) list.push({id: 'restart', label: 'Play from the start', icon: RestartIcon});
   }
+  if (!played && item.positionSeconds > 0) list.push({id: 'unresume', label: 'Remove from Continue Watching', icon: CloseIcon});
   if (item.kind !== 'collection') list.push({id: 'watched', label: played ? 'Mark as unwatched' : 'Mark as watched', icon: CheckIcon});
   list.push({id: 'favorite', label: favorite ? 'Remove from Favorites' : 'Add to Favorites',
     icon: favorite ? HeartFilledIcon : HeartIcon});
-  list.push({id: 'info', label: item.kind === 'episode' ? 'Go to series' : 'Details', icon: InfoIcon});
+  list.push({id: 'info', label: goTo(item), icon: InfoIcon});
   return list;
 }
 

@@ -138,3 +138,10 @@ export const RestartIcon = ({size = 18, color = '#ffffff'}) => (
     <Path d="M4.5 4.5v4h4" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
   </Icon>
 );
+
+export const CloseIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Line x1="6.5" y1="6.5" x2="17.5" y2="17.5" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <Line x1="17.5" y1="6.5" x2="6.5" y2="17.5" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+  </Icon>
+);
