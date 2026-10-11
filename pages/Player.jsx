@@ -32,7 +32,7 @@ function title(item) {
 
 /**
  * The film, full screen, with the controls over it: X pauses, the buttons seek, L1/R1 jump a minute,
- * Square changes the audio track, Circle leaves. The position goes to the server as it plays, so
+ * Square changes the audio track, Triangle the subtitles, Circle leaves. The position goes to the server as it plays, so
  * Continue Watching and other devices pick up where this one stopped.
  */
 export function PlayerPage({item, active = true, onClose}) {
@@ -43,6 +43,8 @@ export function PlayerPage({item, active = true, onClose}) {
   const [status, setStatus] = useState({position: 0, duration: (item.runtime ?? 0) * 60, buffered: 0, state: 'loading'});
   const [tracks, setTracks] = useState([]);
   const [shown, setShown] = useState(true);
+  const [subtitle, setSubtitle] = useState('');
+  const [subtitleTrack, setSubtitleTrack] = useState(-1);
   const hideAt = useRef(0);
   const {focus} = useFocus();
   useEffect(() => { focus('player-play'); }, []);
@@ -51,7 +53,11 @@ export function PlayerPage({item, active = true, onClose}) {
 
   useEffect(() => {
     let live = true;
-    startPlayback(item).then(found => live && setPlayback(found), failed => live && setError(failed.message));
+    startPlayback(item).then(found => {
+      if (!live) return;
+      setPlayback(found);
+      setSubtitleTrack(found.subtitles.preferred);
+    }, failed => live && setError(failed.message));
     return () => { live = false; };
   }, [item.id]);
 
@@ -99,12 +105,19 @@ export function PlayerPage({item, active = true, onClose}) {
     const at = current.audioTracks.findIndex(track => track.index === current.audioTrack);
     video.current.selectAudioTrack(current.audioTracks[(at + 1) % current.audioTracks.length].index);
   };
+  const subtitleOptions = playback?.subtitles.options ?? [];
+  const nextSubtitles = () => {
+    const order = [-1, ...subtitleOptions.map(option => option.track)];
+    setSubtitleTrack(current => order[(order.indexOf(current) + 1) % order.length]);
+  };
+  const subtitleLabel = subtitleOptions.find(option => option.track === subtitleTrack)?.label;
   const onAction = action => {
     if (action === 'l1') seekBy(-60);
     else if (action === 'r1') seekBy(60);
     else if (action === 'l2') seekBy(-10);
     else if (action === 'r2') seekBy(10);
     else if (action === 'square') nextTrack();
+    else if (action === 'triangle') nextSubtitles();
     else return false;
     return true;
   };
@@ -120,10 +133,20 @@ export function PlayerPage({item, active = true, onClose}) {
       <View className="w-screen h-screen bg-black">
         {playback && (
           <Video ref={video} source={playback.url} paused={paused} startTime={playback.startSeconds}
+            subtitles={playback.subtitles.files} subtitleTrack={subtitleTrack} onSubtitle={setSubtitle}
             className="absolute inset-0" onProgress={onProgress}
             onLoad={({audioTracks}) => setTracks(audioTracks)}
             onStatus={s => setStatus(was => ({...was, state: s.state}))}
             onEnd={onClose} onError={({error: failed}) => setError(failed)} />
+        )}
+        {!!subtitle && !error && (
+          <View className={`absolute left-0 right-0 items-center ${shown || paused ? 'bottom-[200px]' : 'bottom-[56px]'}`}>
+            <View className="px-5 py-2 rounded-xl bg-black/55 items-center">
+              {subtitle.split('\n').map((line, index) => (
+                <Text key={index} className="font-semi text-lg text-white">{line}</Text>
+              ))}
+            </View>
+          </View>
         )}
         {waiting && (
           <View className="absolute inset-0 items-center justify-center">
@@ -155,6 +178,9 @@ export function PlayerPage({item, active = true, onClose}) {
               onPress={togglePause} />
             <Button label="+30 s" onPress={() => seekBy(30)} />
             {tracks.length > 1 && <Button label={`Audio: ${track ? (track.language || track.codec) : '—'}`} onPress={nextTrack} />}
+            {subtitleOptions.length > 0 && (
+              <Button label={`Subtitles: ${subtitleLabel ?? 'Off'}`} onPress={nextSubtitles} />
+            )}
             <Text className="font-inter text-sm text-slate-300">L1/R1 one minute · L2/R2 ten seconds</Text>
           </View>
         </motion.View>
