@@ -1,7 +1,9 @@
+import {useEffect} from 'react';
 import {Text, View, useIsFocused} from '@ps5-react/core';
 import {px} from '../../theme.js';
 import {clock} from '../../lib/format.js';
 import {PauseIcon, PlayIcon} from '../Icons.jsx';
+import {setQuietEdges} from '../../lib/edges.js';
 
 const THUMB = 14, THUMB_FOCUSED = 22, BUBBLE_W = 132;
 
@@ -10,8 +12,11 @@ const THUMB = 14, THUMB_FOCUSED = 22, BUBBLE_W = 132;
  * the player turns them into seeks. X pauses. `pending` is where a seek still being chosen lands.
  */
 export function Scrubber({position, duration, buffered, paused, pending, onPress}) {
+  // Closing the player with the bar focused may never blur it.
+  useEffect(() => () => setQuietEdges(false), []);
   return (
-    <View focusKey="player-bar" onPress={onPress} className="flex-row items-center gap-5 h-[56px]">
+    <View focusKey="player-bar" onPress={onPress} onFocus={() => setQuietEdges(true)} onBlur={() => setQuietEdges(false)}
+      className="flex-row items-center gap-5 h-[56px]">
       <Bar position={position} duration={duration} buffered={buffered} paused={paused} pending={pending} />
     </View>
   );

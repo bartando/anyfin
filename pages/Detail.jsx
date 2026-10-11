@@ -50,18 +50,21 @@ function SeasonLabel({label, selected}) {
 /** Pills, one per season (or block of episodes); focusing one selects it, as the top bar's tabs do. */
 const Pills = memo(function Pills({options, selected, onSelect}) {
   return (
-    <ScrollView horizontal className="flex-row h-[56px]">
-      <View className="flex-row gap-2 px-12 py-[8px]">
-        {options.map(option => (
-          <View key={option.id} focusable onFocus={() => onSelect(option.id)}
-            className={`h-[40px] px-5 rounded-full items-center justify-center border
-              ${option.id === selected ? 'bg-white/20 border-white/40' : 'bg-white/5 border-white/10'}
-              focused:bg-white focused:border-white`}>
-            <SeasonLabel label={option.label} selected={option.id === selected} />
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+    // A row that starts at the selected season: landing on another pill would select it.
+    <FocusScope row>
+      <ScrollView horizontal className="flex-row h-[56px]">
+        <View className="flex-row gap-2 px-12 py-[8px]">
+          {options.map(option => (
+            <View key={option.id} focusable selected={option.id === selected} onFocus={() => onSelect(option.id)}
+              className={`h-[40px] px-5 rounded-full items-center justify-center border
+                ${option.id === selected ? 'bg-white/20 border-white/40' : 'bg-white/5 border-white/10'}
+                focused:bg-white focused:border-white`}>
+              <SeasonLabel label={option.label} selected={option.id === selected} />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </FocusScope>
   );
 });
 

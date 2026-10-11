@@ -94,6 +94,9 @@ function Interface({settings, left}) {
       <ToggleRow focusKey="set:sounds" label="Interface sounds" nextFocusLeft={left}
         about="The taps when focus moves and buttons are pressed."
         value={settings.sounds} onChange={v => setSetting('sounds', v)} />
+      <ToggleRow focusKey="set:vibration" label="Vibration" nextFocusLeft={left}
+        about="A light buzz at the end of a row, and clicks while you swipe the touchpad."
+        value={settings.vibration} onChange={v => setSetting('vibration', v)} />
     </>
   );
 }

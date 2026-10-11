@@ -1,5 +1,5 @@
 import {memo, useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView, Text, View, motion, transitions, useIsScreenActive} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View, motion, transitions, useIsScreenActive} from '@ps5-react/core';
 import {HERO_ROTATE_MS, PREVIEW_DELAY_MS, SCREEN, px} from '../theme.js';
 import {clampText} from '../lib/format.js';
 import {Backdrop} from '../components/Backdrop.jsx';
@@ -53,11 +53,13 @@ const Row = memo(function Row({row, index, onOpen, onPreview}) {
   return (
     <View style={{height: px(ROW_H)}}>
       <Text className="font-semi text-lg text-white px-12">{row.title}</Text>
-      <ScrollView horizontal className="flex-row h-[206px]">
-        <View className="flex-row gap-4 px-12 py-[14px]">
-          {row.items.map(item => <CaptionedCard key={item.key} item={item} onPress={onOpen} onFocus={onFocus} />)}
-        </View>
-      </ScrollView>
+      <FocusScope row>
+        <ScrollView horizontal className="flex-row h-[206px]">
+          <View className="flex-row gap-4 px-12 py-[14px]">
+            {row.items.map(item => <CaptionedCard key={item.key} item={item} onPress={onOpen} onFocus={onFocus} />)}
+          </View>
+        </ScrollView>
+      </FocusScope>
     </View>
   );
 });

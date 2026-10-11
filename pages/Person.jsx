@@ -1,5 +1,5 @@
 import {FocusScope, Image, ScrollView, Text, View} from '@ps5-react/core';
-import {SIZES, px} from '../theme.js';
+import {CARD, SIZES, captionedRowH, focusRoom, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
 import {sized} from '../lib/jellyfin/api.js';
 import {loadPerson} from '../lib/jellyfin/library.js';
@@ -68,7 +68,7 @@ export function PersonPage({person: shown, active = true, onClose, onOpen, onPer
           </View>
           <View className="gap-4 pb-12">
             {person?.credits.length > 0 && (
-              <Shelf title="In your library" height={px(206)}>
+              <Shelf title="In your library" height={captionedRowH(CARD.h)} room={focusRoom(CARD.h)}>
                 {person.credits.map(item => <CaptionedCard key={item.key} item={item} onPress={onOpen} />)}
               </Shelf>
             )}
