@@ -38,7 +38,7 @@ function KeyboardStep({input, layout, placeholder, masked, submitLabel, onSubmit
   return (
     <View className="absolute left-12 top-[96px] w-[342px] gap-4">
       <TextField text={input.text} cursor={input.cursor} placeholder={placeholder} masked={masked} icon={false} />
-      <Keyboard input={input} layout={layout} onSubmit={onSubmit} />
+      <Keyboard edit={input.edit} layout={layout} onSubmit={onSubmit} />
       <View className="flex-row items-center gap-3">
         <Button focusKey="submit" label={submitLabel} primary onPress={onSubmit} />
         <Text className="font-inter text-xs text-slate-400">or R2</Text>

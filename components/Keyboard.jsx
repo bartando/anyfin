@@ -1,4 +1,4 @@
-import {memo, useCallback, useEffect, useRef, useState} from 'react';
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Controller, FocusScope, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
 import {px} from '../theme.js';
 import {SearchIcon, SquareGlyph, TriangleGlyph} from './Icons.jsx';
@@ -23,7 +23,10 @@ const SHIFT_LABELS = ['ABC', '#+=', 'abc'];
 const CLEAR_DEPTH = 0.92, RELEASED_DEPTH = 0.2;
 const RESIST_FROM = 0.4, RESIST_STRENGTH = 0.75;
 
-/** Text with a cursor, edited by the keyboard and the controller shortcuts. */
+/**
+ * Text with a cursor, edited by the keyboard and the controller shortcuts. `edit` (type, remove, clear,
+ * move, set) stays the same object, so the keyboard it goes to does not re-render on every key.
+ */
 export function useTextInput(initial = '', max = 24) {
   const [input, setInput] = useState({text: initial, cursor: initial.length});
   const type = useCallback(ch => setInput(value => value.text.length >= max ? value : {
@@ -38,7 +41,8 @@ export function useTextInput(initial = '', max = 24) {
     return next === value.cursor ? value : {...value, cursor: next};
   }), []);
   const set = useCallback(text => setInput({text, cursor: text.length}), []);
-  return {...input, type, remove, clear, move, set};
+  const edit = useMemo(() => ({type, remove, clear, move, set}), [type, remove, clear, move, set]);
+  return {...input, edit};
 }
 
 function KeyLabel({children}) {
@@ -87,6 +91,9 @@ const SPACE = <ActionContent label="Space" Glyph={TriangleGlyph} />;
 const DELETE = <ActionContent label="Delete" Glyph={SquareGlyph} />;
 const CLEAR = <ActionContent label="Clear" button="L2" />;
 
+// One element, so the field re-rendering on every key leaves the icon's vector alone.
+const FIELD_ICON = <SearchIcon size={20} color="#a9a0ff" />;
+
 /** A line of text with its cursor; `masked` draws dots, for passwords. */
 export const TextField = memo(function TextField({text, cursor, placeholder, masked = false, icon = true}) {
   const shown = masked ? null : text;
@@ -95,7 +102,7 @@ export const TextField = memo(function TextField({text, cursor, placeholder, mas
   ));
   return (
     <View className="h-[52px] px-4 flex-row items-center gap-3 rounded-xl bg-white/10 border border-white/15">
-      {icon && <SearchIcon size={20} color="#a9a0ff" />}
+      {icon && FIELD_ICON}
       <View className="flex-1 flex-row items-center">
         {cursor > 0 && (masked ? dots(cursor) : <Text className="font-inter text-md text-white">{shown.slice(0, cursor)}</Text>)}
         <View className="w-[2px] h-[22px] rounded-full bg-accent-soft animate-pulse" />
@@ -122,16 +129,16 @@ function FocusBridge() {
 }
 
 /**
- * The letter-grid keyboard for `input` (useTextInput). Controller shortcuts while it has focus:
+ * The letter-grid keyboard for `edit` (useTextInput's). Controller shortcuts while it has focus:
  * □ delete, △ space, L1/R1 move the cursor, a deep L2 clears, R2 calls `onSubmit`.
  */
-export function Keyboard({input, layout = 'search', onSubmit, focusKey = 'keyboard'}) {
+export const Keyboard = memo(function Keyboard({edit, layout = 'search', onSubmit, focusKey = 'keyboard'}) {
   const modes = LAYOUTS[layout];
   const [mode, setMode] = useState(0);
   const letters = modes[mode % modes.length];
   const clearWatch = useRef(null);
   useEffect(() => () => clearInterval(clearWatch.current), []);
-  const {type, remove, clear, move} = input;
+  const {type, remove, clear, move} = edit;
   const space = useCallback(() => type(' '), [type]);
   const shift = useCallback(() => setMode(value => (value + 1) % modes.length), [modes.length]);
 
@@ -189,4 +196,4 @@ export function Keyboard({input, layout = 'search', onSubmit, focusKey = 'keyboa
       </View>
     </FocusScope>
   );
-}
+});
