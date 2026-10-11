@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="528" height="792" viewBox="0 0 600 900">
+  <title>Anyfin movie poster placeholder</title>
+  <desc>A muted smiling jelly on a near-black film strip, with space below for the movie title.</desc>
+  <defs>
+    <pattern id="placeholder-film" width="600" height="52" patternUnits="userSpaceOnUse">
+      <rect x="26" y="12" width="16" height="24" rx="4" fill="#FFFFFF" opacity=".025"/>
+      <rect x="558" y="12" width="16" height="24" rx="4" fill="#FFFFFF" opacity=".025"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="900" fill="#09090B"/>
+  <rect x="64" y="40" width="472" height="820" rx="24" fill="none" stroke="#FFFFFF" stroke-opacity=".025"/>
+  <rect x="26" y="34" width="16" height="832" fill="url(#placeholder-film)"/>
+  <rect x="558" y="34" width="16" height="832" fill="url(#placeholder-film)"/>
+  <!-- The exporter inserts the happy icon's vector group here. -->
+  <g id="placeholder-mascot" transform="translate(105 180) scale(.76)" opacity=".26"/>
+  <path d="M258 601H342" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".06"/>
+</svg>

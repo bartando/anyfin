@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {FocusScope, Image, Text, View, motion, transitions, useIsFocused} from '@ps5-react/core';
+import {Brand} from './Brand.jsx';
 import {localNow} from '../lib/clock.js';
 import {useSettings} from '../lib/settings.js';
 import {sized} from '../lib/jellyfin/api.js';
@@ -93,7 +94,7 @@ export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, u
     <motion.View className="absolute left-0 right-0 top-0 h-[80px]" pointerEvents="box-none"
       initial={false} animate={{y: -y}} transition={transitions.screen}>
       <View className="absolute left-12 top-0 bottom-0 flex-row items-center">
-        <Text className="font-semi text-xl text-white">Any<Text className="font-semi text-xl text-accent">fin</Text></Text>
+        <Brand />
       </View>
       <FocusScope focusKey="tabs" wrap>
         <View className="absolute left-0 right-0 top-0 bottom-0 items-center justify-center" pointerEvents="box-none">
