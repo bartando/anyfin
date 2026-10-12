@@ -1,5 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
-import {upNextTimes} from '../../lib/upNext.js';
+import {upNextTimes, WARM_LEAD} from '../../lib/upNext.js';
+import {api} from '../../lib/jellyfin/api.js';
+import {getSession} from '../../lib/jellyfin/session.js';
 
 /**
  * The Up Next card over the end of an episode (see lib/upNext.js for when). The countdown runs in
@@ -21,6 +23,14 @@ export function useUpNext({next, onNext, onClose, position, duration, outro, aut
     gone.current = true;
     onNext(next);
   };
+
+  // Asked once, a while before the card, and the answer dropped: the server keeps what it found.
+  const warmed = useRef(null);
+  useEffect(() => {
+    if (!times || warmed.current === next.id || position < times.from - WARM_LEAD) return;
+    warmed.current = next.id;
+    api(`Items/${next.id}/PlaybackInfo`, {userId: getSession().userId}, {fresh: true, background: true}).catch(() => {});
+  }, [position, next]);
 
   useEffect(() => {
     if (dismissed && !inside) setDismissed(false);
