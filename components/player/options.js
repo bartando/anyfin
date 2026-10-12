@@ -24,13 +24,22 @@ function split(title, fallback) {
   return {label, detail: rest.filter(part => part !== 'Default').join(' · ')};
 }
 
+// Names for the language codes files and servers use (ISO 639-2, both forms, and 639-1).
+const LANGUAGES = {eng: 'English', en: 'English', cze: 'Czech', ces: 'Czech', cs: 'Czech', slo: 'Slovak', slk: 'Slovak',
+  sk: 'Slovak', ger: 'German', deu: 'German', de: 'German', fre: 'French', fra: 'French', fr: 'French', spa: 'Spanish',
+  es: 'Spanish', ita: 'Italian', it: 'Italian', pol: 'Polish', pl: 'Polish', hun: 'Hungarian', hu: 'Hungarian',
+  rus: 'Russian', ru: 'Russian', ukr: 'Ukrainian', uk: 'Ukrainian', por: 'Portuguese', pt: 'Portuguese', dut: 'Dutch',
+  nld: 'Dutch', nl: 'Dutch', jpn: 'Japanese', ja: 'Japanese', kor: 'Korean', ko: 'Korean', chi: 'Chinese', zho: 'Chinese',
+  zh: 'Chinese'};
+const language = code => (code ? LANGUAGES[code.toLowerCase()] ?? code : '');
+
 const channels = n => (n === 1 ? 'Mono' : n === 2 ? 'Stereo' : n > 2 ? `${n - 1}.1` : '');
 
 // A player track, by the server's name for that stream when the file plays as it is.
 function audioOption(playback, track, at) {
   const named = playback.playMethod !== 'Transcode' && playback.audio[track.index];
   if (named) return {id: track.index, ...split(named)};
-  return {id: track.index, label: track.language || track.title || `Track ${at + 1}`,
+  return {id: track.index, label: language(track.language) || track.title || `Track ${at + 1}`,
     detail: [(track.codec ?? '').toUpperCase(), channels(track.channels)].filter(Boolean).join(' · ')};
 }
 
