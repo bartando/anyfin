@@ -15,6 +15,5 @@
   "timeoutSeconds": 0,
   "networking": true,
   "filesystemAccess": "console",
-  "video": true,
-  "optionsButton": "app"
+  "video": true
 }
