@@ -61,10 +61,16 @@ function qualities() {
   return [{id: 0, label: 'Default', detail: cap >= 160e6 ? 'Original, from Settings' : `${mbps(cap)}, from Settings`}, ...QUALITIES];
 }
 
+// A model runs only on a picture the 4K screen shows at least this much bigger than it is (the
+// shaders' own condition: Anime4K 1.2, ArtCNN 1.3), so a 4K file, scope (3840 × 1608) included, never.
+const UPSCALE_RATIO = 1.2;
+
 function upscaleNote(status) {
   if (!status?.height) return 'Remembered for this series.';
-  const fills = status.height >= 2160;
-  return `This file is ${status.height}p${fills ? ' and already fills the 4K screen, so upscaling does nothing'
+  const scale = Math.min(3840 / (status.width * (status.aspect || 1)), 2160 / status.height);
+  const fills = scale <= UPSCALE_RATIO;
+  const size = status.width >= 3840 ? `4K (${status.width} × ${status.height})` : `${status.height}p`;
+  return `This file is ${size}${fills ? ' and already fills the 4K screen, so upscaling stays off'
     : ': upscaling doubles it on its way to 4K'}. Remembered for this series.`;
 }
 
