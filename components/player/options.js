@@ -43,6 +43,19 @@ function audioOption(playback, track, at) {
     detail: [(track.codec ?? '').toUpperCase(), channels(track.channels)].filter(Boolean).join(' · ')};
 }
 
+/**
+ * Off, the subtitles the server lists, then the file's own text tracks it does not (an original it
+ * never looked into): the player finds those in the file itself.
+ */
+export function subtitleOptions(playback, status) {
+  const listed = playback.subtitles.options.map(option => ({id: option.track, ...split(option.label)}));
+  const known = new Set(listed.map(option => option.id));
+  const found = (status?.subtitleTracks ?? []).filter(track => !track.external && !known.has(track.index))
+    .map((track, at) => ({id: track.index, label: language(track.language) || track.title || `Track ${listed.length + at + 1}`,
+      detail: track.language ? track.title ?? '' : ''}));
+  return [{id: -1, label: 'Off'}, ...listed, ...found];
+}
+
 function qualities() {
   const cap = getSettings().maxBitrate;
   return [{id: 0, label: 'Default', detail: cap >= 160e6 ? 'Original, from Settings' : `${mbps(cap)}, from Settings`}, ...QUALITIES];
@@ -88,10 +101,7 @@ export function optionTabs({playback, status, subtitleTrack, upscale, autoplay, 
   return [
     {id: 'tracks', label: 'Audio & Subtitles', columns: true, sections: [
       {title: 'AUDIO', options: (status?.audioTracks ?? []).map((track, at) => audioOption(playback, track, at)), selected: status?.audioTrack, onPick: pick.audio},
-      {title: 'SUBTITLES', selected: subtitleTrack, onPick: pick.subtitles, options: [
-        {id: -1, label: 'Off'},
-        ...playback.subtitles.options.map(option => ({id: option.track, ...split(option.label)})),
-      ]},
+      {title: 'SUBTITLES', selected: subtitleTrack, onPick: pick.subtitles, options: subtitleOptions(playback, status)},
     ]},
     {id: 'version', label: 'Version', sections: [
       // The server's name tells versions apart ("1080p · CZ dabing · 4.6 GB"); a bare container name does not.

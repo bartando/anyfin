@@ -13,7 +13,7 @@ import {OptionsPanel} from '../components/player/OptionsPanel.jsx';
 import {SkipPrompt} from '../components/player/SkipPrompt.jsx';
 import {UpNext} from '../components/player/UpNext.jsx';
 import {CompareOverlay, cycleUpscaler, pictureSpan} from '../components/player/Compare.jsx';
-import {optionTabs} from '../components/player/options.js';
+import {optionTabs, subtitleOptions} from '../components/player/options.js';
 import {usePadButton} from '../components/player/usePadButton.js';
 import {useTriggerSeek} from '../components/player/useTriggerSeek.js';
 import {useUpNext} from '../components/player/useUpNext.js';
@@ -258,7 +258,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     subtitleChosen.current = true;
     setSubtitleTrack(track);
   };
-  const subtitleOrder = [-1, ...(playback?.subtitles.options ?? []).map(option => option.track)];
+  const subtitleOrder = playback ? subtitleOptions(playback, video.current?.getStatus()).map(option => option.id) : [-1];
   const restart = change => setRequest(was => ({...was, ...change, startSeconds: position.current}));
   const autoplay = seriesAutoplay ?? settings.autoplay;
   const pick = {
