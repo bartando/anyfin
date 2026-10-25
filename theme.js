@@ -1,6 +1,7 @@
 // Layout constants in logical px (1280-wide, like Tailwind classes) plus helpers for the places that
 // take raw style objects, which the engine reads in render px.
-export const RENDER_SCALE = 3840 / 1280;
+// The framebuffer's width (screen.width) over the logical width: 3 at 3840, 1.5 for a 1920 build.
+export const RENDER_SCALE = (globalThis.screen?.width ?? 3840) / 1280;
 export const px = n => Math.round(n * RENDER_SCALE);
 
 export const SCREEN = {w: 1280, h: 720};
