@@ -8,8 +8,8 @@ A Jellyfin client for jailbroken PS5 consoles, written in React and built with
 - Finds Jellyfin servers on the LAN, or takes an address typed on the on-screen keyboard.
   Signs in with a password or Quick Connect.
 - Home with Continue Watching, Next Up, favorites and the latest movies and shows.
-- Movie and TV libraries with an A-Z bar, search, title pages with seasons, cast and
-  "More like this", and person pages.
+- Movie and TV libraries with an A-Z bar, search, title pages with seasons, cast, stills and
+  "More like this", and person pages. A Trailer button beside Play when the server has a trailer.
 - A full-screen player over Jellyfin's PlaybackInfo: subtitles (embedded or files),
   audio tracks, versions, Skip Intro and Recap, Up Next, and seeking on the triggers.
 - Optional upscaling, with two upscalers side by side to compare.
