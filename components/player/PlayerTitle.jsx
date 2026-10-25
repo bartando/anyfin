@@ -15,7 +15,7 @@ import {Logo} from '../Logo.jsx';
 export function PlayerTitle({item, position, duration, dim}) {
   const episode = item.kind === 'episode';
   const ends = useEndsAt(duration > 0 ? duration - position : null);
-  const parts = episode ? [episodeCode(item), clean(item.title)] : metaParts(item, 0);
+  const parts = episode ? [episodeCode(item), clean(item.title)] : item.kind === 'trailer' ? ['Trailer'] : metaParts(item, 0);
   const line = [...parts, ends && `Ends at ${ends}`].filter(Boolean).join(' · ');
   return (
     <motion.View className="mb-[60px]" animate={{opacity: dim ? 0.35 : 1}} transition={transitions.panel}>

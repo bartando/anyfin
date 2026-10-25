@@ -82,6 +82,13 @@ export const BackIcon = ({size = 18, color = '#ffffff'}) => (
   </Icon>
 );
 
+export const FilmIcon = ({size = 18, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M3.5 5.5h17v13h-17zM7.5 5.5v13M16.5 5.5v13M3.5 9.5h4M3.5 14.5h4M16.5 9.5h4M16.5 14.5h4" fill="none"
+      stroke={color} strokeWidth="2" strokeLinejoin="round" />
+  </Icon>
+);
+
 export const CheckIcon = ({size = 18, color = '#ffffff'}) => (
   <Icon size={size}>
     <Path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={color} strokeWidth="2.8" strokeLinecap="round"

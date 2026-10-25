@@ -2,15 +2,15 @@ import {memo, useRef, useState} from 'react';
 import {FocusScope, ScrollView, Text, View, useIsFocused} from '@ps5-react/core';
 import {CARD, POSTER, captionedRowH, focusRoom, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
-import {loadEpisodes, loadItem, loadNextEpisode, loadSeasons, loadSimilar} from '../lib/jellyfin/library.js';
+import {loadEpisodes, loadItem, loadNextEpisode, loadSeasons, loadSimilar, loadTrailer} from '../lib/jellyfin/library.js';
 import {episodeCode} from '../lib/jellyfin/items.js';
 import {useLoad} from '../lib/useLoad.js';
 import {useProgressVersion} from '../lib/progress.js';
 import {toggleFavorite, togglePlayed, useIsFavorite, useIsPlayed} from '../lib/favorites.js';
 import {Backdrop} from '../components/Backdrop.jsx';
 import {Button} from '../components/Button.jsx';
-import {CaptionedCard, CaptionedPoster} from '../components/Cards.jsx';
-import {BackIcon, CheckIcon, HeartFilledIcon, HeartIcon, PlayIcon} from '../components/Icons.jsx';
+import {CaptionedCard, CaptionedPoster, StillCard} from '../components/Cards.jsx';
+import {BackIcon, CheckIcon, FilmIcon, HeartFilledIcon, HeartIcon, PlayIcon} from '../components/Icons.jsx';
 import {Logo} from '../components/Logo.jsx';
 import {MetaLine} from '../components/Meta.jsx';
 import {PersonBubble} from '../components/People.jsx';
@@ -22,6 +22,7 @@ import {keepPageActions} from '../lib/pageActions.js';
 // season (a soap, an anime) shows its episodes this many at a time.
 const EPISODES_SHOWN = 40;
 const EPISODES_H = captionedRowH(CARD.h), CAST_H = px(176), SIMILAR_H = captionedRowH(POSTER.h);
+const STILLS_H = px(CARD.h + 2 * focusRoom(CARD.h));
 // Placeholder tiles: enough to run past the right edge.
 const CARDS_SHOWN = 6, POSTERS_SHOWN = 8, PEOPLE_SHOWN = 9;
 
@@ -113,6 +114,10 @@ function Episodes({seriesId, seasonId, count, cache, version, next, onPlay}) {
   );
 }
 
+// The trailer plays as the title would, from the start, under its logo.
+const asTrailer = (item, id) => ({...item, id, key: id, kind: 'trailer', runtime: null,
+  progress: 0, played: false, positionSeconds: 0, positionMinutes: 0});
+
 function playLabel(item, next) {
   if (item.kind === 'tv') return next ? `Play ${episodeCode(next)}` : 'Play';
   return item.progress > 0 && item.positionMinutes > 0 ? `Resume ${item.positionMinutes} min` : 'Play';
@@ -123,7 +128,7 @@ function playLabel(item, next) {
  * and episodes, then cast and similar titles, which open a person page or another title. The item
  * shown first is the card's; the full item from the server fills in the rest.
  */
-export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen, onPerson}) {
+export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen, onPerson, onStills}) {
   // Coming back from the player, the position it stopped at loads again: "Resume", the next episode.
   const progress = useProgressVersion();
   const {data: live, error: liveError} = useLoad(`item-${shown.id}`, () => loadItem(shown.id), progress);
@@ -132,6 +137,8 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
   const {data: similar, error: similarError} = useLoad(`similar-${shown.id}`, () => loadSimilar(shown.id));
   const {data: seasons, error: seasonsError} = useLoad(series ? `seasons-${shown.id}` : null, () => loadSeasons(shown.id));
   const {data: next} = useLoad(series ? `next-${shown.id}` : null, () => loadNextEpisode(shown.id), progress);
+  const {data: trailer} = useLoad(item.trailers > 0 ? `trailer-${shown.id}` : null, () => loadTrailer(shown.id));
+  const stills = item.backdrops ?? [];
   const [picked, setPicked] = useState(shown.initialSeasonId ?? null);
   const seasonId = picked ?? next?.seasonId ?? seasons?.[0]?.id ?? null;
   const episodeCache = useRef(new Map()).current;
@@ -162,6 +169,7 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
               <View className="flex-row gap-4 pt-2">
                 <Button label="Back" icon={BackIcon} onPress={onClose} />
                 <Button label={playLabel(item, next)} icon={PlayIcon} primary autoFocus onPress={() => onPlay(series && next ? next : item)} />
+                {trailer && <Button label="Trailer" icon={FilmIcon} onPress={() => onPlay(asTrailer(item, trailer))} />}
                 <Button label={favorite ? 'In Favorites' : 'Favorite'} icon={favorite ? HeartFilledIcon : HeartIcon}
                   onPress={() => toggleFavorite(item)} />
                 <Button label={played ? 'Watched' : 'Mark Watched'} icon={played ? CheckIcon : undefined}
@@ -188,6 +196,11 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
             {cast.length > 0 && (
               <Shelf title="Cast" height={CAST_H} anchor>
                 {cast.map(person => <PersonBubble key={person.id} person={person} onPress={onPerson} />)}
+              </Shelf>
+            )}
+            {stills.length > 1 && (
+              <Shelf title="Stills" height={STILLS_H} room={focusRoom(CARD.h)} anchor>
+                {stills.map((uri, index) => <StillCard key={uri} uri={uri} index={index} onPress={at => onStills(item, at)} />)}
               </Shelf>
             )}
             {!similar && !similarError && <PostersSkeleton title="More like this" count={POSTERS_SHOWN} height={SIMILAR_H} />}
