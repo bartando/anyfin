@@ -67,6 +67,13 @@ export const CircleGlyph = ({size = 12, color = '#ffffff'}) => (
   <Icon size={size}><Circle cx="12" cy="12" r="7.5" fill="none" stroke={color} strokeWidth="2.4" /></Icon>
 );
 
+// A remote's menu key, which opens what Triangle does.
+export const MenuGlyph = ({size = 12, color = '#ffffff'}) => (
+  <Icon size={size}>
+    <Path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+  </Icon>
+);
+
 // The DualSense touchpad, seen from above: wide, its lower corners rounded off.
 export const TouchpadGlyph = ({size = 12, color = '#ffffff'}) => (
   <Icon size={size}>

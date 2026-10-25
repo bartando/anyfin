@@ -3,10 +3,11 @@ import {View, motion, transitions, useIsFocused} from '@ps5-react/core';
 import {FOCUS_LIFT, FOCUS_SCALE, RING_GAP, px} from '../theme.js';
 import {FocusRing} from './FocusRing.jsx';
 import {Glass} from './Glass.jsx';
-import {TriangleGlyph} from './Icons.jsx';
+import {MenuGlyph, TriangleGlyph} from './Icons.jsx';
+import {remote} from '../lib/remote.js';
 import {cardBlurred, cardFocused} from '../lib/focusedCard.js';
 
-// Triangle's menu, hinted: a glyph in a dim circle on the card's top-left corner (the watched badge
+// Triangle's menu (a remote's menu key), hinted: a glyph in a dim circle on the card's top-left corner (the watched badge
 // has the other one), once focus has rested there a moment. Outside the scaled body like the ring,
 // so its fade repaints only the circle.
 const HINT_AFTER_MS = 1200, HINT = 26, HINT_INSET = 8;
@@ -23,7 +24,8 @@ function TriangleHint({w, h, scale}) {
     <motion.View pointerEvents="none" initial={{opacity: 0}} animate={{opacity: 1}} transition={transitions.panel}
       className="absolute rounded-full bg-black/50 border border-white/30 items-center justify-center"
       style={{left: px(left), top: px(top), width: px(HINT), height: px(HINT)}}>
-      <TriangleGlyph size={12} color="rgba(255,255,255,0.9)" />
+      {remote ? <MenuGlyph size={12} color="rgba(255,255,255,0.9)" />
+        : <TriangleGlyph size={12} color="rgba(255,255,255,0.9)" />}
     </motion.View>
   );
 }

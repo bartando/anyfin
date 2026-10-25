@@ -2,6 +2,7 @@ import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Controller, FocusScope, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
 import {px} from '../theme.js';
 import {SearchIcon, SquareGlyph, TriangleGlyph} from './Icons.jsx';
+import {remote} from '../lib/remote.js';
 
 const KEY = 52, KEY_GAP = 6;
 const DIGITS = '1234567890'.split('');
@@ -50,18 +51,20 @@ function KeyLabel({children}) {
   return <Text focused={focused} className="font-semi text-md text-white focused:text-canvas">{children}</Text>;
 }
 
-/** An action key: its word, and in the corner the controller button that does the same. */
+/** An action key: its word, and in the corner the controller button that does the same (none on a remote). */
 function ActionContent({label, Glyph, button}) {
   const focused = useIsFocused();
   const color = focused ? '#0b0b12' : '#d9d4ff';
   return (
     <>
       <Text focused={focused} className="font-semi text-sm text-[#d9d4ff] focused:text-canvas">{label}</Text>
-      <View className="absolute top-[5px] right-[6px] opacity-70">
-        {Glyph ? <Glyph size={10} color={color} /> : button ? (
-          <Text focused={focused} className="font-semi text-[10px] leading-[12px] text-[#d9d4ff] focused:text-canvas">{button}</Text>
-        ) : null}
-      </View>
+      {!remote && (
+        <View className="absolute top-[5px] right-[6px] opacity-70">
+          {Glyph ? <Glyph size={10} color={color} /> : button ? (
+            <Text focused={focused} className="font-semi text-[10px] leading-[12px] text-[#d9d4ff] focused:text-canvas">{button}</Text>
+          ) : null}
+        </View>
+      )}
     </>
   );
 }
@@ -110,7 +113,7 @@ export const TextField = memo(function TextField({text, cursor, placeholder, mas
           : <Text className="font-inter text-md text-white">{shown.slice(cursor)}</Text>)
           : <Text className="font-inter text-md text-slate-400">{placeholder}</Text>}
       </View>
-      {text ? <View className="flex-row gap-1"><ButtonBadge>L1</ButtonBadge><ButtonBadge>R1</ButtonBadge></View> : null}
+      {text && !remote ? <View className="flex-row gap-1"><ButtonBadge>L1</ButtonBadge><ButtonBadge>R1</ButtonBadge></View> : null}
     </View>
   );
 });

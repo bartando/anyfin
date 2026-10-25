@@ -1,6 +1,7 @@
 import {Text, View, useIsFocused} from '@ps5-react/core';
 import {FocusRing} from '../FocusRing.jsx';
 import {TouchpadGlyph} from '../Icons.jsx';
+import {remote} from '../../lib/remote.js';
 
 const LABELS = {intro: 'Skip Intro', recap: 'Skip Recap'};
 
@@ -23,7 +24,7 @@ function Body({label}) {
   const color = focused ? '#0b0b12' : '#ffffff';
   return (
     <>
-      <TouchpadGlyph size={22} color={color} />
+      {!remote && <TouchpadGlyph size={22} color={color} />}
       <Text focused={focused} className="font-semi text-md text-white focused:text-canvas">{label}</Text>
       {focused && <FocusRing radius={26} outX={4} outY={4} />}
     </>

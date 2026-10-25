@@ -1,6 +1,7 @@
 import {useEffect, useRef} from 'react';
 import {FocusScope, ScrollView, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
 import {CheckIcon} from '../Icons.jsx';
+import {remote} from '../../lib/remote.js';
 
 const rowKey = (tab, section, id) => `opt:${tab}:${section}:${id}`;
 const tabKey = id => `opt-tab:${id}`;
@@ -45,12 +46,12 @@ export function OptionsPanel({tabs, tab, onTab, onClose}) {
     <FocusScope trap onBack={() => { onClose(); return true; }} onAction={onAction}>
       <View className="absolute right-0 top-0 bottom-0 w-[620px] bg-canvas px-10 pt-10 pb-8">
         <View className="flex-row items-center gap-1 mb-7">
-          <Hint>L1</Hint>
+          {!remote && <Hint>L1</Hint>}
           {tabs.map(candidate => (
             <Tab key={candidate.id} id={candidate.id} label={candidate.label} selected={candidate === current}
               onFocus={() => onTab(candidate.id)} />
           ))}
-          <Hint>R1</Hint>
+          {!remote && <Hint>R1</Hint>}
         </View>
         {current.facts ? <Facts facts={current.facts} /> : current.columns ? (
           <View className="flex-1 flex-row gap-8">
