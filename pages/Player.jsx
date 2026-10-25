@@ -13,6 +13,7 @@ import {OptionsPanel} from '../components/player/OptionsPanel.jsx';
 import {SkipPrompt} from '../components/player/SkipPrompt.jsx';
 import {UpNext} from '../components/player/UpNext.jsx';
 import {CompareOverlay, cycleUpscaler, pictureSpan} from '../components/player/Compare.jsx';
+import {remote} from '../lib/remote.js';
 import {optionTabs, subtitleOptions} from '../components/player/options.js';
 import {usePadButton} from '../components/player/usePadButton.js';
 import {useTriggerSeek} from '../components/player/useTriggerSeek.js';
@@ -45,11 +46,11 @@ function SubtitleLine({size, children}) {
  * The film, full screen. The bar is where focus rests: Left and Right seek, X pauses, Up reaches Back,
  * Audio & Subtitles and Next Episode. The options panel (Square or Options) has the tracks, the version
  * and quality, the upscaler, autoplay and what is playing. L1/R1 jump a minute; L2/R2 tapped jump the
- * step from Settings and held scrub (useTriggerSeek). Triangle cycles the subtitles. During an intro or
- * recap the touchpad skips it; over the credits of an episode the next one is offered and, with
- * autoplay, starts. Circle first puts that offer away, then brings the hidden controls back, then
- * leaves. The position goes to the server as it plays, so Continue Watching and other devices pick up
- * where this one stopped.
+ * step from Settings and held scrub (useTriggerSeek). Triangle cycles the subtitles, except from a TV
+ * remote, whose Menu key it is: there it opens the panel. During an intro or recap the touchpad skips
+ * it; over the credits of an episode the next one is offered and, with autoplay, starts. Circle first
+ * puts that offer away, then brings the hidden controls back, then leaves. The position goes to the
+ * server as it plays, so Continue Watching and other devices pick up where this one stopped.
  */
 export function PlayerPage({item, active = true, onClose, onNext}) {
   const video = useRef(null);
@@ -311,9 +312,10 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     if (action === 'l1') seekTo(position.current - 60);
     else if (action === 'r1') seekTo(position.current + 60);
     else if (action === 'l2' || action === 'r2') { /* useTriggerSeek takes the triggers from controller events */ }
+    // A TV remote's Menu key comes as Triangle, and opens the panel rather than cycling subtitles.
+    else if (action === 'options' || (remote && action === 'triangle')) (panel ? closePanel() : openPanel());
     else if (action === 'triangle') chooseSubtitles(subtitleOrder[(subtitleOrder.indexOf(subtitleTrack) + 1) % subtitleOrder.length]);
     else if (action === 'square') openPanel();
-    else if (action === 'options') (panel ? closePanel() : openPanel());
     else return false;
     return true;
   };
