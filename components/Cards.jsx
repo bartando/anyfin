@@ -3,6 +3,7 @@ import {Image, Text, View} from '@ps5-react/core';
 import {CARD, POSTER, SIZES, px} from '../theme.js';
 import {clean} from '../lib/format.js';
 import {logoUrl, posterUrl, thumbUrl} from '../lib/art.js';
+import {sized} from '../lib/jellyfin/api.js';
 import {caption, cardTitle} from '../lib/jellyfin/items.js';
 import {useIsPlayed} from '../lib/favorites.js';
 import {FocusCard} from './FocusCard.jsx';
@@ -47,6 +48,15 @@ export const BackdropCard = memo(function BackdropCard({item, onPress, onFocus, 
         </>
       )}
       <Progress item={item} w={CARD.w} />
+    </FocusCard>
+  );
+});
+
+/** One of a title's backdrops, as a 16:9 tile; pressing it hands back its `index`. */
+export const StillCard = memo(function StillCard({uri, index, onPress}) {
+  return (
+    <FocusCard w={CARD.w} h={CARD.h} radius={CARD.radius} onPress={() => onPress(index)}>
+      <Image source={{uri: sized(uri, SIZES.card)}} className="w-[240px] h-[135px] rounded-xl bg-white/5" />
     </FocusCard>
   );
 });

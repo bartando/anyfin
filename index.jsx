@@ -19,6 +19,7 @@ import {SearchPage} from './pages/Search.jsx';
 import {DetailPage} from './pages/Detail.jsx';
 import {PlayerPage} from './pages/Player.jsx';
 import {PersonPage} from './pages/Person.jsx';
+import {StillsPage} from './pages/Stills.jsx';
 import {CollectionPage} from './pages/Collection.jsx';
 import {SettingsPage} from './pages/Settings.jsx';
 import {ConnectPage} from './pages/Connect.jsx';
@@ -121,6 +122,7 @@ function Main({session, active}) {
   } : item}), []);
   const openPerson = useCallback(person => push({type: 'person', person}), []);
   const openCollection = useCallback(collection => push({type: 'collection', collection}), []);
+  const openStills = useCallback((item, index) => push({type: 'stills', item, index}), []);
   const openFavorite = useCallback(item => (item.kind === 'collection' ? openCollection(item) : open(item)), []);
   const back = useCallback(() => setStack(pages => pages.slice(0, -1)), []);
   // Next Episode: the player hands over to a new one in its place.
@@ -224,11 +226,13 @@ function Main({session, active}) {
                 initial={top ? 'hidden' : false} animate="shown" exit={top ? 'gone' : 'drop'}>
                 {page.type === 'title' ? (
                   <DetailPage item={page.item} active={top} onClose={back} onPlay={play} onOpen={open}
-                    onPerson={openPerson} />
+                    onPerson={openPerson} onStills={openStills} />
                 ) : page.type === 'person' ? (
                   <PersonPage person={page.person} active={top} onClose={back} onOpen={open} onPerson={openPerson} />
                 ) : page.type === 'player' ? (
                   <PlayerPage item={page.item} active={top} onClose={back} onNext={playNext} />
+                ) : page.type === 'stills' ? (
+                  <StillsPage item={page.item} index={page.index} active={top} onClose={back} />
                 ) : page.type === 'settings' ? (
                   <SettingsPage session={session} section={page.section} active={top} onClose={back} />
                 ) : (
