@@ -5,13 +5,15 @@
   python3 demo/make.py compose  # the device layers and the video: demo/demo.mp4 and demo/demo.gif
   python3 demo/make.py all
 
-stage.json places the devices (images in devices/; a screen's is an SVG with a rect#screen) on the canvas, back to
-front, with any `html` layers among them (the title), and gives each screen its clip: the platform the preview pretends to be (ROA_PLATFORM, for
-button hints) and the input script it plays. A new device is an SVG and an entry.
+stage.json places the devices (images in devices/; a screen's is an SVG with a rect#screen) on the
+canvas, back to front, with any `html` layers among them (the title). Each screen's clip names the
+platform the preview pretends to be (ROA_PLATFORM, for button hints); every clip plays stage.json's
+`script` unless it has its own. A new device is an image and an entry.
 
-`record` signs in as the preview last did (its sandbox in ../react-on-anything/.build/anyfin) and
-sets the account's favorite movies to stage.json's while it records, so Home shows them; it puts
-the account's own back afterwards. Needs ffmpeg, Google Chrome, and a built react-on-anything.
+`record` runs a preview per clip, all at once, so the screens keep in step and their clocks agree.
+Each signs in as the preview last did (a copy of its sandbox in ../react-on-anything/.build/anyfin),
+and the account's favorite movies are stage.json's while they record, so Home shows them; the
+account's own come back afterwards. Needs ffmpeg, Google Chrome and react-on-anything's tools.
 """
 import argparse
 import contextlib
@@ -125,28 +127,58 @@ def favorites(account, names):
         saved.unlink()
 
 
+def preview(roa):
+    """React on Anything's desktop preview of this app, built, and the bundle it runs."""
+    python = roa / ".venv/bin/python3"
+    built = subprocess.run([python if python.exists() else sys.executable, roa / "tools/cli.py", "preview", "--app-dir", APP],
+                           env={**os.environ, "ROA_INPUT_SCRIPT": "quit"}, capture_output=True, text=True)
+    if built.returncode:
+        sys.stderr.write(built.stdout[-3000:] + built.stderr[-3000:])
+        raise SystemExit("The preview did not build")
+    render = json.loads((APP / "app.json").read_text())["render"]
+    build = roa / ".build" / APP.name
+    return build / "desktop/react-on-anything-preview", build / "generated" / f"{render['width']}x{render['height']}" / "app.bundle.js"
+
+
 def record(spec, roa, only=()):
     clips = BUILD / "clips"
     clips.mkdir(parents=True, exist_ok=True)
-    python = roa / ".venv/bin/python3"
     sandbox = roa / ".build" / APP.name / "sandbox"
     if not (sandbox / "download0/session.json").exists():
         raise SystemExit(f"Sign in to a server in the preview first ({sandbox} has no session)")
+    binary, bundle = preview(roa)
+    devices = [d for d in spec["devices"] if d.get("clip") and (not only or d["name"] in only)]
+    runs = {}
     with favorites(Account(sandbox), spec.get("favorites", [])):
-        for device in spec["devices"]:
-            clip = device.get("clip")
-            if not clip or (only and device["name"] not in only):
-                continue
-            print(f"Recording {device['name']}…", flush=True)
-            env = {**os.environ, "ROA_RECORD": str(clips / f"{device['name']}.mp4"), "ROA_RECORD_FPS": str(spec["fps"]),
-                   "ROA_PLATFORM": clip["platform"], "ROA_INPUT_SCRIPT": clip["script"] + " quit"}
-            run = subprocess.run([python if python.exists() else sys.executable, roa / "tools/cli.py", "preview",
-                                  "--app-dir", APP], env=env, capture_output=True, text=True)
-            recorded = re.search(r"\[ROA\] recorded (\d+) frames", run.stdout)
-            if run.returncode or not recorded:
-                sys.stderr.write(run.stdout[-3000:] + run.stderr[-3000:])
-                raise SystemExit(f"{device['name']}: the preview did not record")
-            print(f"  {int(recorded.group(1)) / spec['fps']:.1f}s")
+        try:
+            for device in devices:
+                # Its own sandbox, a clone of the signed-in one (session and image cache), so the
+                # previews don't write over each other.
+                own = BUILD / "sandboxes" / device["name"]
+                shutil.rmtree(own, ignore_errors=True)
+                own.mkdir(parents=True)
+                for part in ("download0", "cache0"):
+                    if (sandbox / part).exists():
+                        subprocess.run(["cp", "-cR", sandbox / part, own / part], check=True)
+                clip = device["clip"]
+                env = {**os.environ, "ROA_SANDBOX": str(own), "ROA_RECORD": str(clips / f"{device['name']}.mp4"),
+                       "ROA_RECORD_FPS": str(spec["fps"]), "ROA_PLATFORM": clip["platform"],
+                       "ROA_INPUT_SCRIPT": clip.get("script", spec["script"]) + " quit"}
+                print(f"Recording {device['name']}…", flush=True)
+                runs[device["name"]] = subprocess.Popen([binary, bundle], cwd=bundle.parent, env=env, text=True,
+                                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            for name, run in runs.items():
+                output = run.communicate()[0]
+                recorded = re.search(r"\[ROA\] recorded (\d+) frames", output)
+                if run.returncode or not recorded:
+                    sys.stderr.write(output[-3000:])
+                    raise SystemExit(f"{name}: the preview did not record")
+                print(f"  {name}: {int(recorded.group(1)) / spec['fps']:.1f}s")
+        finally:
+            for run in runs.values():
+                if run.poll() is None:
+                    run.kill()
+            shutil.rmtree(BUILD / "sandboxes", ignore_errors=True)  # they hold the session's token
 
 
 # The video.

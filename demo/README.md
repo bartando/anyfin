@@ -22,8 +22,8 @@ Favorite Movies row shows them; its own come back afterwards (kept in `demo/buil
    taller screen gets a black band on top (the MacBook's notch).
 2. Add it to `stage.json`'s `devices`, which are drawn back to front: its `image`, `x`, `y` and `width` on the
    1920x1080 canvas, and a `clip` with the `platform` the preview reports (`android`, `switch`,
-   `ps5`, `desktop`) and the input `script` it plays (the steps of React on Anything's
-   `ROA_INPUT_SCRIPT`; `quit` is added).
+   `ps5`, `desktop`). Every screen plays the top-level `script`, the steps of React on Anything's
+   `ROA_INPUT_SCRIPT` (`quit` is added), in step with the others; a clip's own `script` replaces it.
 3. `python3 demo/make.py all`.
 
 The PS5 and the Shield have no screen and no clip, and the TV is drawn twice, a clip each; the
