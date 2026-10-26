@@ -1,4 +1,4 @@
-import {Text, View, useIsFocused} from '@ps5-react/core';
+import {Text, View, useIsFocused} from '@react-on-anything/core';
 import {FocusRing} from './FocusRing.jsx';
 
 function Label({primary, children}) {

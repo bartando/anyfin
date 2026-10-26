@@ -1,4 +1,4 @@
-import {Svg, Path, Circle, Line, Rect} from '@ps5-react/core';
+import {Svg, Path, Circle, Line, Rect} from '@react-on-anything/core';
 import {px} from '../theme.js';
 
 // Svg width/height are render px; `size` is logical like the rest of the layout.

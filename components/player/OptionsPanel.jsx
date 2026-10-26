@@ -1,5 +1,5 @@
 import {useEffect, useRef} from 'react';
-import {FocusScope, ScrollView, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View, useFocusActions, useIsFocused} from '@react-on-anything/core';
 import {CheckIcon} from '../Icons.jsx';
 import {buttonName, touchscreen} from '../../lib/buttons.js';
 

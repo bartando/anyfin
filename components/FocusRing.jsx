@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import {Animated, Easing, View, useAnimatedValue} from '@ps5-react/core';
+import {Animated, Easing, View, useAnimatedValue} from '@react-on-anything/core';
 import {px} from '../theme.js';
 
 // The PS5 focus ring: a thin static white border with a light running around it (ANIMATION.md,

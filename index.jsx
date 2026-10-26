@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocusActions,
-  usePan} from '@ps5-react/core';
+  usePan} from '@react-on-anything/core';
 import {useInterfaceSounds} from './sounds.js';
 import {useMoveTracking} from './lib/lastMove.js';
 import {LaunchIntro} from './components/LaunchIntro.jsx';

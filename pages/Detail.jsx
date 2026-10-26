@@ -1,5 +1,5 @@
 import {memo, useRef, useState} from 'react';
-import {FocusScope, ScrollView, Text, View, useIsFocused} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View, useIsFocused} from '@react-on-anything/core';
 import {CARD, POSTER, captionedRowH, focusRoom, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
 import {loadEpisodes, loadItem, loadNextEpisode, loadSeasons, loadSimilar, loadTrailer} from '../lib/jellyfin/library.js';

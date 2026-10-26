@@ -1,5 +1,5 @@
 import {memo, useEffect, useState} from 'react';
-import {View, motion, transitions, useIsFocused} from '@ps5-react/core';
+import {View, motion, transitions, useIsFocused} from '@react-on-anything/core';
 import {FOCUS_LIFT, FOCUS_SCALE, RING_GAP, px} from '../theme.js';
 import {FocusRing} from './FocusRing.jsx';
 import {Glass} from './Glass.jsx';

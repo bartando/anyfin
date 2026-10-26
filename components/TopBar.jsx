@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {DeviceInfo, FocusScope, Image, PanView, Text, View, motion, transitions, useIsFocused} from '@ps5-react/core';
+import {DeviceInfo, FocusScope, Image, PanView, Text, View, motion, transitions, useIsFocused} from '@react-on-anything/core';
 import {Brand} from './Brand.jsx';
 import {formatTime, localNow} from '../lib/clock.js';
 import {useSettings} from '../lib/settings.js';

@@ -1,5 +1,5 @@
 import {memo} from 'react';
-import {Text, View} from '@ps5-react/core';
+import {Text, View} from '@react-on-anything/core';
 import {LETTERS} from '../lib/format.js';
 
 /** The A–Z index beside a library grid: the current letter lit, letters without titles dimmed. */

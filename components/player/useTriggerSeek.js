@@ -1,5 +1,5 @@
 import {useEffect, useRef} from 'react';
-import {Controller, useControllerEvents} from '@ps5-react/core';
+import {Controller, useControllerEvents} from '@react-on-anything/core';
 import {FAST_FROM} from '../../lib/seekCurve.js';
 import {triggerSeek} from '../../lib/triggerSeek.js';
 

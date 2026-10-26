@@ -1,6 +1,6 @@
 import {memo, useCallback, useEffect, useRef, useState} from 'react';
 import {FocusScope, PanView, ScrollView, Text, View, motion, transitions, useFocusActions, useIsScreenActive, useTouching}
-  from '@ps5-react/core';
+  from '@react-on-anything/core';
 import {HERO_ROTATE_MS, PREVIEW_DELAY_MS, SCREEN, px} from '../theme.js';
 import {clampText} from '../lib/format.js';
 import {Backdrop} from '../components/Backdrop.jsx';

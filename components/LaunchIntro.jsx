@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {FocusScope, Image, Svg, View, motion} from '@ps5-react/core';
+import {FocusScope, Image, Svg, View, motion} from '@react-on-anything/core';
 import frames from '../assets/brand/intro-frames.json';
 import background from '../assets/brand/intro-background.png';
 import ground from '../assets/brand/intro-ground.png';

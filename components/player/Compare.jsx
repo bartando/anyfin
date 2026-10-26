@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {FocusScope, Text, View, motion, transitions} from '@ps5-react/core';
+import {FocusScope, Text, View, motion, transitions} from '@react-on-anything/core';
 import {SCREEN, px} from '../../theme.js';
 import {SMOOTH_MS, UPSCALERS} from '../../lib/upscalers.js';
 import {buttonName} from '../../lib/buttons.js';

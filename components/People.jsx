@@ -1,5 +1,5 @@
 import {memo} from 'react';
-import {Image, Text, View, useIsFocused} from '@ps5-react/core';
+import {Image, Text, View, useIsFocused} from '@react-on-anything/core';
 import {CAST} from '../theme.js';
 import {clean} from '../lib/format.js';
 import {profileUrl} from '../lib/art.js';

@@ -3,11 +3,10 @@
 // Rasterizes glyphs exactly like bake-font.mjs bakeGlyph() at 4 bpp, prints ink % per glyph, then
 // repeats with every contour explicitly closed ('Z' appended) to show that closing alone fixes it.
 import fs from 'node:fs';
-import os from 'node:os';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 
-const ASSETS = `${os.homedir()}/PhpstormProjects/ps5-react/.deps/embeddedReact/bridges/quickjs/js/assets/`;
+const ASSETS = fileURLToPath(new URL('../../react-on-anything/.deps/embeddedReact/bridges/quickjs/js/assets/', import.meta.url));
 const opentype = createRequire(ASSETS + 'index.mjs')('opentype.js');
 const {rasterize} = await import(ASSETS + 'rasterize.mjs');
 

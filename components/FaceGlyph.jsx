@@ -1,4 +1,4 @@
-import {Text, View} from '@ps5-react/core';
+import {Text, View} from '@react-on-anything/core';
 import {buttonName, nintendo} from '../lib/buttons.js';
 import {px} from '../theme.js';
 import {CircleGlyph, CloseIcon, SquareGlyph, TouchpadGlyph, TriangleGlyph} from './Icons.jsx';

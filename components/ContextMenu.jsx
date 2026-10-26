@@ -1,4 +1,4 @@
-import {FocusScope, Text, View, motion, transitions, useIsFocused} from '@ps5-react/core';
+import {FocusScope, Text, View, motion, transitions, useIsFocused} from '@react-on-anything/core';
 import {SCREEN, px} from '../theme.js';
 import {clean} from '../lib/format.js';
 import {caption, cardTitle} from '../lib/jellyfin/items.js';

@@ -1,4 +1,4 @@
-import {Image, Text, View, useIsFocused} from '@ps5-react/core';
+import {Image, Text, View, useIsFocused} from '@react-on-anything/core';
 import {SIZES} from '../../theme.js';
 import {clean} from '../../lib/format.js';
 import {thumbUrl} from '../../lib/art.js';

@@ -1,4 +1,4 @@
-import {Image} from '@ps5-react/core';
+import {Image} from '@react-on-anything/core';
 import wordmark from '../assets/brand/wordmark.png';
 import {px} from '../theme.js';
 

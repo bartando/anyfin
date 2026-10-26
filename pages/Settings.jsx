@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {FocusScope, ScrollView, Text, Video, View, useFocusActions, useIsFocused} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, Video, View, useFocusActions, useIsFocused} from '@react-on-anything/core';
 import {logOut} from '../lib/jellyfin/auth.js';
 import {setSetting, useSettings} from '../lib/settings.js';
 import {ActionRow, ChoiceRow, InfoRow, ToggleRow} from '../components/SettingRow.jsx';
@@ -128,7 +128,7 @@ function About() {
   return (
     <>
       <InfoRow label="Anyfin" value="1.0" />
-      <InfoRow label="Built with" value="PS5 React" />
+      <InfoRow label="Built with" value="React on Anything" />
       <Heading>UPSCALERS</Heading>
       <InfoRow label="ArtCNN" value="João Chrisóstomo · MIT" />
       <InfoRow label="Anime4K" value="bloc97 · MIT" />

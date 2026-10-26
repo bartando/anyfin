@@ -1,5 +1,5 @@
 import {memo, useCallback, useEffect, useState} from 'react';
-import {FocusScope, ScrollView, Text, View, VirtualList, useFocusActions} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View, VirtualList, useFocusActions} from '@react-on-anything/core';
 import {CARD} from '../theme.js';
 import {loadPicks, searchItems} from '../lib/jellyfin/library.js';
 import {useLoad} from '../lib/useLoad.js';

@@ -1,5 +1,5 @@
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Controller, FocusScope, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
+import {Controller, FocusScope, Text, View, useFocus, useIsFocused} from '@react-on-anything/core';
 import {px} from '../theme.js';
 import {FaceGlyph} from './FaceGlyph.jsx';
 import {SearchIcon} from './Icons.jsx';

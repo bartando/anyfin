@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import {Text, View, useIsFocused} from '@ps5-react/core';
+import {Text, View, useIsFocused} from '@react-on-anything/core';
 import {SCREEN, px} from '../../theme.js';
 import {clock} from '../../lib/format.js';
 import {setQuietEdges} from '../../lib/edges.js';

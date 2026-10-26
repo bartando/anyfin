@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {FocusScope, Text, View} from '@ps5-react/core';
+import {FocusScope, Text, View} from '@react-on-anything/core';
 import {Backdrop} from '../components/Backdrop.jsx';
 import {keepPageActions} from '../lib/pageActions.js';
 

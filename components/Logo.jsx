@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Image, Text, View} from '@ps5-react/core';
+import {Image, Text, View} from '@react-on-anything/core';
 import {px} from '../theme.js';
 import {clean} from '../lib/format.js';
 import {logoUrl} from '../lib/art.js';

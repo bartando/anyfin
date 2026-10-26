@@ -1,5 +1,5 @@
 {
-  "$schema": "../ps5-react/app.schema.json",
+  "$schema": "../react-on-anything/app.schema.json",
   "titleId": "PPSA99080",
   "contentId": "UP9000-PPSA99080_00-JELLY50000000000",
   "name": "Anyfin",

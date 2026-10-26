@@ -1,4 +1,4 @@
-import {Image, Text, View} from '@ps5-react/core';
+import {Image, Text, View} from '@react-on-anything/core';
 import poster from '../assets/brand/poster-placeholder.png';
 import thumb from '../assets/brand/thumb-placeholder.png';
 import {CARD, POSTER, px} from '../theme.js';

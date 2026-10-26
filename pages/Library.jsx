@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Controller, ScrollView, Text, View, VirtualList, useNavigationEvents} from '@ps5-react/core';
+import {Controller, ScrollView, Text, View, VirtualList, useNavigationEvents} from '@react-on-anything/core';
 import {POSTER, PREVIEW_DELAY_MS, px} from '../theme.js';
 import {LETTERS, clampText, clean, formatCount} from '../lib/format.js';
 import {useLetterOffsets} from '../lib/jellyfin/letters.js';

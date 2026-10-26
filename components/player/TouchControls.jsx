@@ -1,4 +1,4 @@
-import {Text, View, motion, transitions} from '@ps5-react/core';
+import {Text, View, motion, transitions} from '@react-on-anything/core';
 import {PauseIcon, PlayIcon, SeekIcon} from '../Icons.jsx';
 import {px} from '../../theme.js';
 

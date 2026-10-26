@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Text, motion, transitions} from '@ps5-react/core';
+import {Text, motion, transitions} from '@react-on-anything/core';
 import {clean, metaParts} from '../../lib/format.js';
 import {formatTime, localNow} from '../../lib/clock.js';
 import {useSettings} from '../../lib/settings.js';

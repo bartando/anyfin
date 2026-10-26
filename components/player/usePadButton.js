@@ -1,4 +1,4 @@
-import {useControllerEvents} from '@ps5-react/core';
+import {useControllerEvents} from '@react-on-anything/core';
 
 /**
  * `onPress` when `button` goes down while `enabled`, for the buttons the host sends no action for

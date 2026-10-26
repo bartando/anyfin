@@ -1,5 +1,5 @@
 import {Children, useRef, useState} from 'react';
-import {FocusScope, ScrollView, Text, View} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View} from '@react-on-anything/core';
 import {px} from '../theme.js';
 
 // Cards mounted before the shelf has measured itself, and how far past the scroll target (in

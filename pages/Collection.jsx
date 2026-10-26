@@ -1,4 +1,4 @@
-import {FocusScope, ScrollView, Text, View} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, View} from '@react-on-anything/core';
 import {CARD, captionedRowH, focusRoom, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
 import {loadCollection} from '../lib/jellyfin/library.js';

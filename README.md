@@ -1,7 +1,7 @@
 # Anyfin
 
-A Jellyfin client for jailbroken PS5 consoles, written in React and built with
-[ps5-react](https://github.com/bartando/ps5-react).
+A Jellyfin client for jailbroken PS5 consoles, the Nintendo Switch and Android TV, written in
+React and built with [React on Anything](https://github.com/bartando/ps5-react).
 
 ## What it does
 
@@ -18,16 +18,17 @@ A Jellyfin client for jailbroken PS5 consoles, written in React and built with
 
 ## Build
 
-Anyfin is an external ps5-react app and uses features from the
-[bartando/ps5-react](https://github.com/bartando/ps5-react) fork. Clone both side by side:
+Anyfin is an external react-on-anything app and uses features from the
+[bartando/ps5-react](https://github.com/bartando/ps5-react) fork, React on Anything under its old
+GitHub name. Clone both side by side:
 
 ```sh
-git clone https://github.com/bartando/ps5-react.git
+git clone https://github.com/bartando/ps5-react.git react-on-anything
 git clone https://github.com/bartando/anyfin.git
-cd ps5-react
+cd react-on-anything
 ```
 
-Follow the ps5-react README to install its tools, then:
+Follow the react-on-anything README to install its tools, then:
 
 ```sh
 npm run dev -- --app-dir ../anyfin     # native macOS preview, rebuilds on save
@@ -36,5 +37,5 @@ npm run build -- --app-dir ../anyfin   # PS5 package in dist/PPSA99080/
 
 ## License
 
-GPL-3.0, the same as ps5-react. See [LICENSE](LICENSE). The fonts are under the SIL Open
+GPL-3.0, the same as react-on-anything. See [LICENSE](LICENSE). The fonts are under the SIL Open
 Font License and the sounds under CC BY 4.0 (`assets/sounds/NOTICE.txt`).

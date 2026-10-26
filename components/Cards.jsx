@@ -1,5 +1,5 @@
 import {memo} from 'react';
-import {Image, Text, View} from '@ps5-react/core';
+import {Image, Text, View} from '@react-on-anything/core';
 import {CARD, POSTER, SIZES, px} from '../theme.js';
 import {clean} from '../lib/format.js';
 import {logoUrl, posterUrl, thumbUrl} from '../lib/art.js';

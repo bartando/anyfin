@@ -1,4 +1,4 @@
-import {Text, motion, transitions} from '@ps5-react/core';
+import {Text, motion, transitions} from '@react-on-anything/core';
 
 export function Toast({text}) {
   return (

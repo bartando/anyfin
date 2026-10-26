@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
-import {View, motion} from '@ps5-react/core';
+import {View, motion} from '@react-on-anything/core';
 import {RENDER_SCALE, px} from '../theme.js';
 import {lastMove} from '../lib/lastMove.js';
 

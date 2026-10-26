@@ -38,7 +38,7 @@ static. The in-app intro runs at the app's configured render size, currently
 3840 × 2160. This integration has not been verified on PS5 hardware.
 
 To rebuild assets from the Anyfin directory, use Python 3.12+ and the framework's
-bootstrapped Embedded React dependency in the sibling `ps5-react` checkout:
+bootstrapped Embedded React dependency in the sibling `react-on-anything` checkout:
 
 ```sh
 python3 -m venv .brand-venv

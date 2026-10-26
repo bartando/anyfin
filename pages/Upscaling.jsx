@@ -1,4 +1,4 @@
-import {Text, View, useIsFocused} from '@ps5-react/core';
+import {Text, View, useIsFocused} from '@react-on-anything/core';
 import {FocusRing} from '../components/FocusRing.jsx';
 import {SMOOTH_MS, UPSCALERS} from '../lib/upscalers.js';
 

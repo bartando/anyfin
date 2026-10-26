@@ -4,7 +4,7 @@
 // Interface sounds for every focus move, press and back, a light buzz at the end of a row, and a tick
 // for each step of a touchpad swipe (the D-pad and stick do not tick). The WAVs are derived from Google's Material
 // Design sound resources (CC BY 4.0; see assets/sounds/NOTICE.txt).
-import {Controller, Sound, useNavigationEvents} from '@ps5-react/core';
+import {Controller, Sound, useNavigationEvents} from '@react-on-anything/core';
 import {getSettings} from './lib/settings.js';
 import {edgesQuiet} from './lib/edges.js';
 import focus from './assets/sounds/focus.wav';

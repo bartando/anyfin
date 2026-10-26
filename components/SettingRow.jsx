@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {FocusScope, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
+import {FocusScope, Text, View, useFocusActions, useIsFocused} from '@react-on-anything/core';
 import {FocusRing} from './FocusRing.jsx';
 import {CheckIcon} from './Icons.jsx';
 

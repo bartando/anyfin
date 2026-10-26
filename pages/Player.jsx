@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {FocusScope, Text, View, Video, motion, transitions, useFocus, useNavigationEvents, useTouching} from '@ps5-react/core';
+import {FocusScope, Text, View, Video, motion, transitions, useFocus, useNavigationEvents, useTouching} from '@react-on-anything/core';
 import {loadEpisodeAfter} from '../lib/jellyfin/library.js';
 import {loadMarkers, reportProgress, reportStart, reportStopped, startPlayback} from '../lib/jellyfin/playback.js';
 import {skippable} from '../lib/jellyfin/markers.js';

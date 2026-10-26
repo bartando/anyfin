@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {Image, View, motion} from '@ps5-react/core';
+import {Image, View, motion} from '@react-on-anything/core';
 import {SIZES, px} from '../theme.js';
 import {backdropUrl} from '../lib/art.js';
 

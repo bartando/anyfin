@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {FocusScope, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
+import {FocusScope, Text, View, useFocusActions, useIsFocused} from '@react-on-anything/core';
 import {Brand} from '../components/Brand.jsx';
 import {getLastServer, rememberServer} from '../lib/jellyfin/session.js';
 import {normalizeAddress, probeServer} from '../lib/jellyfin/api.js';

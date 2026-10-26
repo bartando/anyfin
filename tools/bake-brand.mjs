@@ -3,7 +3,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const app=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const er=resolve(app,'../ps5-react/.deps/embeddedReact/bridges/quickjs/js');
+const er=resolve(app,'../react-on-anything/.deps/embeddedReact/bridges/quickjs/js');
 const {svgToVector}=await import(pathToFileURL(er+'/assets/bake-svg.mjs'));
 const {VOP_SHAPE,VOP_MOVE,VOP_LINE,VOP_QUAD,VOP_CUBIC,PAINT_STRIDE}=await import(pathToFileURL(er+'/src/embedded-react/svg-ops.js'));
 const widths={[VOP_SHAPE]:1,[VOP_MOVE]:2,[VOP_LINE]:2,[VOP_QUAD]:4,[VOP_CUBIC]:6};

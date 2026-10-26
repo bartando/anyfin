@@ -1,4 +1,4 @@
-import {ScrollView, View, motion} from '@ps5-react/core';
+import {ScrollView, View, motion} from '@react-on-anything/core';
 import {CARD, CAST, POSTER, px} from '../theme.js';
 import {Shelf} from './Shelf.jsx';
 

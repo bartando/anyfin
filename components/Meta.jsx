@@ -1,4 +1,4 @@
-import {Text, View} from '@ps5-react/core';
+import {Text, View} from '@react-on-anything/core';
 import {metaParts} from '../lib/format.js';
 import {StarIcon} from './Icons.jsx';
 
