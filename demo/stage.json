@@ -1,0 +1,83 @@
+{
+  "size": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "seconds": 23,
+  "background": "radial-gradient(ellipse 70% 60% at 50% 30%, #2b2356 0%, #15122a 50%, #08080d 100%)",
+  "favorites": [
+    "Blade Runner 2049",
+    "Interstellar",
+    "Oppenheimer",
+    "Spider-Man: Across the Spider-Verse",
+    "Spirited Away",
+    "The Batman",
+    "Top Gun: Maverick",
+    "Your Name."
+  ],
+  "devices": [
+    {
+      "name": "title",
+      "html": "<div style=\"position:absolute;left:740px;width:480px;top:640px;text-align:center;font-family:-apple-system,'SF Pro Display',Helvetica,sans-serif;color:#fff\"><img src=\"{app}/artwork/anyfin/wordmark.svg\" style=\"width:270px\"><div style=\"margin-top:10px;font-size:30px;font-weight:600;letter-spacing:-0.3px\">Jellyfin that runs on anything.</div><div style=\"margin-top:12px;font-size:19px;color:#b9b3e6\">PS5 · Android TV · Nintendo Switch · macOS</div></div>"
+    },
+    {
+      "name": "tv-ps5",
+      "image": "tv.svg",
+      "x": 190,
+      "y": 40,
+      "width": 760,
+      "clip": {
+        "platform": "ps5",
+        "script": "wait:4500 down wait:1300 down wait:900 down wait:1300 right wait:1200 right wait:1600 confirm wait:3500 down wait:2200 down wait:2200 right wait:1000 right wait:3000"
+      }
+    },
+    {
+      "name": "ps5",
+      "image": "ps5.png",
+      "x": 14,
+      "y": 112,
+      "width": 172
+    },
+    {
+      "name": "tv-shield",
+      "image": "tv.svg",
+      "x": 990,
+      "y": 40,
+      "width": 760,
+      "clip": {
+        "platform": "android",
+        "script": "wait:4500 down wait:1600 down wait:900 down wait:1400 right wait:1100 right wait:1100 right wait:1100 right wait:1100 right wait:1100 right wait:1400 confirm wait:3500 down wait:2000 down wait:3000"
+      }
+    },
+    {
+      "name": "shield",
+      "image": "shield.svg",
+      "x": 1540,
+      "y": 468,
+      "width": 180
+    },
+    {
+      "name": "macbook",
+      "image": "macbook.svg",
+      "x": 40,
+      "y": 575,
+      "width": 680,
+      "clip": {
+        "platform": "desktop",
+        "script": "wait:4500 down wait:1300 down wait:900 down wait:1500 right wait:1500 confirm wait:3500 down wait:2200 down wait:2200 right wait:1000 right wait:1000 right wait:3000"
+      }
+    },
+    {
+      "name": "switch",
+      "image": "switch.svg",
+      "x": 1240,
+      "y": 665,
+      "width": 640,
+      "clip": {
+        "platform": "switch",
+        "script": "wait:4500 down wait:1300 down wait:900 down wait:1200 right wait:900 right wait:900 right wait:900 right wait:900 right wait:1500 confirm wait:3500 down wait:2200 down wait:3500"
+      }
+    }
+  ]
+}

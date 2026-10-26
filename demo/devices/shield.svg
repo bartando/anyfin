@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 140">
+  <!-- NVIDIA Shield TV (the 2019 tube), lying down. No screen. -->
+  <defs>
+    <linearGradient id="tube" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4a52"/>
+      <stop offset="0.18" stop-color="#232328"/>
+      <stop offset="0.6" stop-color="#0d0d10"/>
+      <stop offset="1" stop-color="#1b1b20"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1a1a1f"/>
+      <stop offset="1" stop-color="#050506"/>
+    </linearGradient>
+    <filter id="blur" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <ellipse cx="200" cy="122" rx="185" ry="7" fill="#000" opacity="0.7" filter="url(#blur)"/>
+  <rect x="12" y="34" width="376" height="82" rx="41" fill="url(#tube)"/>
+  <path d="M347 34 A41 41 0 0 1 347 116 L332 116 A41 41 0 0 0 332 34 Z" fill="url(#cap)"/>
+  <path d="M40 41 H330" stroke="#8a8a96" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"/>
+  <path d="M62 64 q10 -9 22 0 q-12 9 -22 0 Z" fill="#76b900" filter="url(#glow)" opacity="0.8"/>
+  <path d="M62 64 q10 -9 22 0 q-12 9 -22 0 Z" fill="#8fd400"/>
+</svg>

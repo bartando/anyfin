@@ -4,3 +4,4 @@ tools/__pycache__/
 lib/tmdb-token.js
 
 .brand-venv/
+demo/build/

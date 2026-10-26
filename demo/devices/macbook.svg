@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620">
+  <!-- A MacBook Pro, open: a 16:10 screen with a notch; a 16:9 app sits at its bottom, as full screen. -->
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e4e4e8"/>
+      <stop offset="0.5" stop-color="#b9b9c0"/>
+      <stop offset="1" stop-color="#85858d"/>
+    </linearGradient>
+    <linearGradient id="glare" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.08"/>
+      <stop offset="0.42" stop-color="#fff" stop-opacity="0.02"/>
+      <stop offset="0.43" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="hole">
+      <rect width="1000" height="620" fill="#fff"/>
+      <rect x="96" y="18" width="808" height="505" rx="10" fill="#000"/>
+    </mask>
+    <filter id="blur" x="-20%" y="-300%" width="140%" height="700%"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+  <ellipse cx="500" cy="596" rx="470" ry="12" fill="#000" opacity="0.65" filter="url(#blur)"/>
+  <rect x="80" y="0" width="840" height="548" rx="26" fill="#0b0b0e" mask="url(#hole)"/>
+  <rect x="81.5" y="1.5" width="837" height="545" rx="25" fill="none" stroke="#74747e" stroke-width="3"/>
+  <rect x="455" y="12" width="90" height="24" rx="8" fill="#0b0b0e"/>
+  <circle cx="500" cy="24" r="3.5" fill="#1f2433"/>
+  <rect x="96" y="18" width="808" height="505" fill="url(#glare)"/>
+  <rect x="110" y="548" width="780" height="9" fill="#2a2a30"/>
+  <path d="M0 557 H1000 V567 Q1000 583 980 585 H20 Q0 583 0 567 Z" fill="url(#base)"/>
+  <rect x="425" y="557" width="150" height="7" rx="3.5" fill="#8a8a92"/>
+  <rect id="screen" x="96" y="18" width="808" height="505" rx="10" fill="none"/>
+</svg>
