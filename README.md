@@ -1,7 +1,7 @@
 # Anyfin
 
 A Jellyfin client for jailbroken PS5 consoles, the Nintendo Switch and Android TV, written in
-React and built with [React on Anything](https://github.com/bartando/ps5-react).
+React and built with [React on Anything](https://github.com/bartando/react-on-anything).
 
 ## What it does
 
@@ -18,12 +18,11 @@ React and built with [React on Anything](https://github.com/bartando/ps5-react).
 
 ## Build
 
-Anyfin is an external react-on-anything app and uses features from the
-[bartando/ps5-react](https://github.com/bartando/ps5-react) fork, React on Anything under its old
-GitHub name. Clone both side by side:
+Anyfin is an external [React on Anything](https://github.com/bartando/react-on-anything) app. Clone
+both side by side:
 
 ```sh
-git clone https://github.com/bartando/ps5-react.git react-on-anything
+git clone https://github.com/bartando/react-on-anything.git
 git clone https://github.com/bartando/anyfin.git
 cd react-on-anything
 ```
