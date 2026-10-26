@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="9 50 500 500" role="img" aria-labelledby="mascot-title">
+  <title id="mascot-title">Anyfin — Afterglow mascot</title>
+  <defs>
+    <linearGradient id="jelly" gradientUnits="userSpaceOnUse" x1="370" y1="60" x2="514" y2="637">
+      <stop offset="0" stop-color="#FFF2FF" />
+      <stop offset="0.36" stop-color="#ECD8FF" />
+      <stop offset="0.75" stop-color="#C4A0FA" />
+      <stop offset="1" stop-color="#A879E8" />
+    </linearGradient>
+    <linearGradient id="pool" gradientUnits="userSpaceOnUse" x1="440" y1="526" x2="450" y2="640">
+      <stop stop-color="#CAA3ED" stop-opacity=".3" />
+      <stop offset="1" stop-color="#A775DA" stop-opacity=".7" />
+    </linearGradient>
+    <path id="jelly-shape" d="M309 193C328 164 338 146 342 124C347 95 338 79 322 63C306 47 313 31 335 29C373 23 417 44 451 70C485 95 510 136 535 170C559 184 579 195 597 207C650 238 680 283 697 345C710 392 714 426 736 456C758 484 765 506 755 532C744 569 720 590 691 594C659 600 626 586 603 575C594 570 589 571 581 580C549 608 507 610 466 595C453 590 447 595 439 605C412 629 373 636 335 629C296 625 268 612 251 594C245 587 240 586 229 593C204 605 177 603 155 590C129 575 120 553 123 524C125 496 137 475 154 455C178 427 188 405 193 370C198 316 215 269 249 235C269 216 290 205 309 193Z" />
+    <clipPath id="jelly-clip">
+      <use href="#jelly-shape" />
+    </clipPath>
+    <radialGradient id="aura">
+      <stop stop-color="#9C60FF" stop-opacity=".43" />
+      <stop offset=".58" stop-color="#8A45F0" stop-opacity=".2" />
+      <stop offset="1" stop-color="#7131D0" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="ground-glow">
+      <stop stop-color="#D6A4FF" stop-opacity=".42" />
+      <stop offset="1" stop-color="#AB77E5" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="glow-rim" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#E2C6FF" />
+      <stop offset=".45" stop-color="#EAD9FF" />
+      <stop offset="1" stop-color="#C385FA" />
+    </linearGradient>
+    <radialGradient id="inner-light">
+      <stop stop-color="#FDEFFF" stop-opacity=".56" />
+      <stop offset="1" stop-color="#FDEFFF" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <g id="afterglow">
+    <ellipse cx="259" cy="321" rx="250" ry="234" fill="url(#aura)" />
+    <ellipse cx="260" cy="467" rx="175" ry="28" fill="url(#ground-glow)" />
+    <g transform="translate(-43 39) scale(.68)">
+      <use href="#jelly-shape" transform="translate(7 14)" fill="#35145E" opacity=".25" />
+      <use href="#jelly-shape" fill="url(#jelly)" stroke="url(#glow-rim)" stroke-width="6" />
+      <g clip-path="url(#jelly-clip)">
+        <path d="M110 514C153 555 214 568 247 550C292 592 381 607 437 576C485 597 549 592 581 565C640 585 720 566 770 507L790 660H100Z" fill="url(#pool)" />
+        <ellipse cx="445" cy="357" rx="197" ry="207" fill="url(#inner-light)" />
+        <path d="M261 245C229 279 214 317 209 353" fill="none" stroke="#EAFFF8" stroke-width="11" stroke-linecap="round" />
+        <path d="M671 296C687 329 692 365 699 396" fill="none" stroke="#FBC1F0" stroke-width="12" stroke-linecap="round" opacity=".88" />
+        <path d="M274 588C307 610 350 617 389 606" fill="none" stroke="#E1C4FF" stroke-width="8" stroke-linecap="round" />
+        <path d="M339 48C377 50 413 69 444 94" fill="none" stroke="#FFFDF8" stroke-width="15" stroke-linecap="round" />
+        <path d="M266 251C285 228 309 212 336 199" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" opacity=".92" />
+      </g>
+      <path d="M502 398Q529 436 551 391" fill="none" stroke="#6338A4" stroke-width="13" stroke-linecap="round" />
+      <ellipse cx="373" cy="399" rx="23" ry="10" fill="#F299D0" opacity=".46" transform="rotate(-8 373 399)" />
+      <ellipse cx="635" cy="369" rx="19" ry="9" fill="#F299D0" opacity=".46" transform="rotate(-8 635 369)" />
+      <path d="M371 360Q394 320 419 354" fill="none" stroke="#6338A4" stroke-width="12" stroke-linecap="round" />
+      <path d="M596 332Q613 296 632 326" fill="none" stroke="#6338A4" stroke-width="12" stroke-linecap="round" />
+    </g>
+  </g>
+</svg>

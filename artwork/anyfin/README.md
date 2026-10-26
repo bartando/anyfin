@@ -6,6 +6,7 @@ pink cheeks. The wordmark is outlined Outfit SemiBold; its OFL is included.
 
 `icon.svg`, `splash.svg`, `wordmark.svg`, and `scene.svg` are the editable SVG
 sources. The icon exporter replaces the curious face with the held happy face.
+`mascot.svg` is the happy splash mascot on transparency, for the repo README.
 `timeline.mjs` and `turn.mjs` define the four-second jump-and-spin sequence.
 
 The native launch component plays once per process. The signed-in app mounts

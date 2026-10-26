@@ -1,4 +1,5 @@
 <p align="center">
+  <img src="artwork/anyfin/mascot.svg" width="220" alt=""><br>
   <img src="artwork/anyfin/wordmark.svg" width="280" alt="Anyfin">
 </p>
 
