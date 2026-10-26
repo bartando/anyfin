@@ -53,6 +53,22 @@ render((ART/'splash.svg').read_text(),SHELL/'pic1.png',1920,1080,True)
 render((ART/'splash.svg').read_text(),SHELL/'pic0.png',1920,1080,True)
 render((ART/'wordmark.svg').read_text(),ASSETS/'wordmark.png',1120,376)
 
+# Android TV's launcher banner, 16:9 and twice the 320x180 it is laid out at: the icon's jelly and glow
+# without its square, beside the wordmark, on the icon's background.
+ANDROID=APP/'android'
+ANDROID.mkdir(exist_ok=True)
+banner=ET.Element(tag('svg'),dict(viewBox='0 0 640 360',width='640',height='360'))
+banner.append(copy.deepcopy(icon.find(tag('defs'))))
+ET.SubElement(banner,tag('rect'),dict(width='640',height='360',fill='url(#background)'))
+ET.SubElement(banner,tag('rect'),dict(width='640',height='360',fill='url(#ambient)'))
+jelly=copy.deepcopy(icon)
+for n in [n for n in jelly if n.tag==tag('path') and n.get('d')=='M0 0H512V512H0Z']:jelly.remove(n)
+jelly.attrib.update(x='6',y='6',width='340',height='340')
+wordmark=ET.parse(ART/'wordmark.svg').getroot()
+wordmark.attrib.update(x='318',y='128',width='292',height='98')
+banner.extend([jelly,wordmark])
+render(banner,ANDROID/'banner.png',640,360,True)
+
 # Keep the full-screen backdrop and aura still; only the small foreground updates.
 background=ET.parse(ART/'splash.svg').getroot()
 for n in list(background):
