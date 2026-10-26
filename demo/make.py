@@ -2,7 +2,7 @@
 """The README's demo: Anyfin on drawn devices, each screen a recording of the desktop preview.
 
   python3 demo/make.py record [names]  # the devices' clips, through React on Anything's preview
-  python3 demo/make.py compose  # the device layers and the video: demo/demo.mp4 and demo/demo.gif
+  python3 demo/make.py compose  # the device layers, the video and its still: demo/demo.mp4, demo/demo.png
   python3 demo/make.py all
 
 stage.json places the devices (images in devices/; a screen's is an SVG with a rect#screen) on the
@@ -205,21 +205,15 @@ def compose(spec):
         inputs += ["-loop", "1", "-framerate", str(fps), "-i", layers / f"{device['name']}.png"]
         graph.append(f"[{last}][{count}:v]overlay=0:0[v{count}]")
         last, count = f"v{count}", count + 1
-    graph.append(f"[{last}]format=yuv420p[out]")
-    video = DEMO / "demo.mp4"
-    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(graph), "-map", "[out]",
-                    "-t", str(seconds), "-r", str(fps), "-c:v", "libx264", "-preset", "slow", "-crf", "20",
+    video, still = DEMO / "demo.mp4", DEMO / "demo.png"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(graph + [f"[{last}]format=yuv420p[out]"]),
+                    "-map", "[out]", "-t", str(seconds), "-r", str(fps), "-c:v", "libx264", "-preset", "slow", "-crf", "20",
                     "-movflags", "+faststart", video], check=True)
-    # The README's inline copy: GitHub plays a GIF where it shows a committed video only as a link.
-    gif = DEMO / "demo.gif"
-    palette = BUILD / "palette.png"
-    # Ordered (Bayer) dithering repeats frame to frame, so it compresses: 6MB where error diffusion took 14.
-    scale = "fps=10,scale=960:-1:flags=lanczos"
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-vf", f"{scale},palettegen=max_colors=192:stats_mode=diff",
-                    palette], check=True)
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-i", palette, "-lavfi",
-                    f"{scale}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle", gif], check=True)
-    for path in (video, gif):
+    # The README's picture, the frame at `still` seconds, from the composition rather than the video.
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex",
+                    ";".join(graph + [f"[{last}]trim=start={spec['still']},setpts=PTS-STARTPTS,format=rgb24[out]"]),
+                    "-map", "[out]", "-frames:v", "1", still], check=True)
+    for path in (video, still):
         print(f"{path.relative_to(APP)}: {path.stat().st_size / 1e6:.1f}MB")
 
 

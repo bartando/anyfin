@@ -1,13 +1,13 @@
 # Demo
 
-`demo.mp4` and `demo.gif`: Anyfin on two TVs (a PS5's and a Shield's), a MacBook and a Switch, every
+`demo.mp4`, and `demo.png` from it: Anyfin on two TVs (a PS5's and a Shield's), a MacBook and a Switch, every
 screen a recording of the desktop preview. Drawn, not filmed, and not every pixel is what the device
 shows: the preview names itself the PS5, Android, the Switch or macOS for the button hints, and draws
 the same 1080p layout on each.
 
 ```sh
 python3 demo/make.py all      # record the clips, then compose the video
-python3 demo/make.py compose  # only the composition, after editing the layout
+python3 demo/make.py compose  # only the composition, after editing the layout or `still` (seconds)
 ```
 
 It needs a built [React on Anything](https://github.com/bartando/react-on-anything) checkout beside
@@ -34,4 +34,4 @@ The PS5 and the Shield have no screen and no clip, and the TV is drawn twice, a 
 `devices/ps5.png` is [PlayStation 5 and DualSense with transparent background](https://commons.wikimedia.org/wiki/File:PlayStation_5_and_DualSense_with_transparent_background.png)
 by Osh33m (photograph) and Soberian (retouch), from Wikimedia Commons under
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), cropped and scaled; so are the
-PS5 in `demo.mp4` and `demo.gif`. The other devices are drawn here.
+PS5 in `demo.mp4` and `demo.png`. The other devices are drawn here.

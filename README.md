@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="demo/demo.mp4"><img src="demo/demo.gif" width="800"
+  <a href="demo/demo.mp4"><img src="demo/demo.png" width="100%"
     alt="Anyfin on a PS5, an NVIDIA Shield, a MacBook and a Nintendo Switch: Home, favorites and title pages"></a><br>
-  <sub><a href="demo/demo.mp4">Full-quality video</a> · made with <a href="demo/">demo/</a></sub>
+  <sub>▶ <a href="demo/demo.mp4">Watch it move</a> · made with <a href="demo/">demo/</a></sub>
 </p>
 
 ## Where it runs
