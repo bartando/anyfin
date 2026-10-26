@@ -246,7 +246,9 @@ export const LibraryPage = memo(function LibraryPage({title, params, version = 0
       </View>
       <ScrollView className="absolute left-0 right-0 bottom-0 top-[262px]">
         <View className="px-12 py-4">
-          <VirtualList ref={listRef} data={grid.cells} keyExtractor={keyOf} renderItem={renderItem}
+          {/* The rows on screen and the two below, mounted while the tab is preloaded off stage: the list
+              would otherwise mount them a card a frame as the page slides in. */}
+          <VirtualList ref={listRef} data={grid.cells} keyExtractor={keyOf} renderItem={renderItem} initialNumRows={4}
             numColumns={POSTER.cols} itemHeight={POSTER.h} rowGap={POSTER.rowGap} columnGap={POSTER.colGap} />
         </View>
         <View className="h-[24px]" />
