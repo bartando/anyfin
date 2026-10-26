@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {FocusScope, Text, View, Video, motion, transitions, useFocus, useNavigationEvents} from '@ps5-react/core';
+import {FocusScope, Text, View, Video, motion, transitions, useFocus, useNavigationEvents, useTouching} from '@ps5-react/core';
 import {loadEpisodeAfter} from '../lib/jellyfin/library.js';
 import {loadMarkers, reportProgress, reportStart, reportStopped, startPlayback} from '../lib/jellyfin/playback.js';
 import {skippable} from '../lib/jellyfin/markers.js';
@@ -19,6 +19,7 @@ import {usePadButton} from '../components/player/usePadButton.js';
 import {useTriggerSeek} from '../components/player/useTriggerSeek.js';
 import {useUpNext} from '../components/player/useUpNext.js';
 import {PauseIcon} from '../components/Icons.jsx';
+import {TouchControls} from '../components/player/TouchControls.jsx';
 
 // The controls fade out this long after the last input while the film plays.
 const CONTROLS_MS = 4000;
@@ -67,7 +68,7 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
   const [subtitle, setSubtitle] = useState('');
   const [subtitleTrack, setSubtitleTrack] = useState(-1);
   const subtitleChosen = useRef(false);
-  const [upscale, setUpscale] = useState(() => upscalerFor(item));
+  const [upscale, setUpscale] = useState(() => (Video.canUpscale() ? upscalerFor(item) : ''));
   const [next, setNext] = useState(null);
   const [markers, setMarkers] = useState(null);
   const [panel, setPanel] = useState(null);
@@ -84,14 +85,19 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
 
   useEffect(() => { focus('player-bar'); }, []);
 
-  // A new request (another version or quality) reopens the stream where it was.
+  // A new request (another version or quality) reopens the stream where it was. The versions stay as
+  // the first answer listed them: asked for one version, a server lists that one first, or only it.
+  const versions = useRef(null);
+  useEffect(() => { versions.current = null; }, [item.id]);
   useEffect(() => {
     let live = true;
     setPlayback(null);
     setError(null);
     startPlayback(item, request).then(found => {
       if (!live) return;
-      setPlayback(found);
+      const listed = versions.current ?? [];
+      versions.current = [...listed, ...found.versions.filter(v => !listed.some(known => known.id === v.id))];
+      setPlayback({...found, versions: versions.current});
       if (!subtitleChosen.current) setSubtitleTrack(getSettings().subtitles === 'off' ? -1 : found.subtitles.preferred);
     }, failed => live && setError(failed.message));
     return () => { live = false; };
@@ -225,26 +231,18 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     return !was;
   });
 
-  // The panel pauses the film and gives it back as it was.
-  const pausedBefore = useRef(false);
+  // The film plays on under the panel, which it shows through.
   const openPanel = (tab = 'tracks') => {
-    if (!playback || panel) return;
-    pausedBefore.current = paused;
-    setPaused(true);
-    setPanel(tab);
+    if (playback && !panel) setPanel(tab);
   };
-  const closePanel = () => {
-    setPanel(null);
-    setPaused(pausedBefore.current);
-  };
+  const closePanel = () => setPanel(null);
   const wasOpen = useRef(false);
   useEffect(() => {
     if (wasOpen.current && !panel) focus(comparing.current ? 'player-compare' : 'player-options');
     wasOpen.current = !!panel;
   }, [panel]);
 
-  // From the panel, the film as it was (a still, as the panel paused it): the model playing on the
-  // left, Off or ArtCNN on the right. Leaving keeps the left one; Square keeps the right one.
+  // From the panel, the film as it plays: the model playing on the left, Off or ArtCNN on the right. Leaving keeps the left one; Square keeps the right one.
   const startCompare = () => {
     setCompare({left: upscale, right: upscale ? '' : 'artcnn', split: 0.5, activity: 0});
     setPanel(null);
@@ -330,12 +328,52 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
     return true;
   };
 
+  // On the touchscreen, as on a phone: a tap brings hidden controls back rather than pressing what is
+  // under them, and one on the picture puts them away again (or closes the options panel) soon after.
+  const onTap = ({node}) => {
+    if (!visible.current) {
+      wake();
+      return true;
+    }
+    if (node) {
+      wake();
+      return false;
+    }
+    if (panel) closePanel();
+    else hideAt.current = 0;
+    return true;
+  };
+
+  const touching = useTouching();
+  // A finger on the bar: the seek follows it, and lands where it lifts.
+  const [grabbed, setGrabbed] = useState(false);
+  const scrubTouch = ({phase, x, rect}) => {
+    wake();
+    if (!rect || !(status.duration > 0)) return;
+    clearTimeout(scrub.current.timer);
+    scrub.current.target = null;
+    const at = Math.max(0, Math.min(1, (x - rect.x) / rect.width)) * status.duration;
+    if (phase === 'end') {
+      setGrabbed(false);
+      setPending(null);
+      seekTo(at);
+    } else {
+      setGrabbed(true);
+      setPending(at);
+    }
+  };
+  const seekBy = seconds => {
+    wake();
+    moveTarget(seconds);
+    settle();
+  };
+
   const waiting = !error && (!playback || status.state === 'loading' || status.state === 'buffering');
   const controls = !compare && (shown || paused || !!error || !!panel);
   const live = video.current?.getStatus();
 
   return (
-    <FocusScope trap={active} inert={!active} onBack={onBack} onAction={onAction}>
+    <FocusScope trap={active} inert={!active} onBack={onBack} onAction={onAction} onTap={onTap}>
       <View className="w-screen h-screen bg-black">
         {playback && (
           <Video key={playback.url} ref={video} source={playback.url} paused={paused} startTime={playback.startSeconds}
@@ -359,7 +397,11 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
             <Text className="font-semi text-lg text-white/80">{status.state === 'buffering' ? 'Buffering…' : 'Loading…'}</Text>
           </View>
         )}
-        {paused && !panel && !compare && !waiting && !error && (
+        {touching && playback && !panel && !compare && !error && (
+          <TouchControls shown={controls} paused={paused} step={settings.seekStep}
+            onToggle={() => { wake(); togglePause(); }} onSeek={seekBy} />
+        )}
+        {paused && !touching && !panel && !compare && !waiting && !error && (
           <View className="absolute inset-0 items-center justify-center">
             <View className="w-[96px] h-[96px] rounded-full bg-black/45 items-center justify-center">
               <PauseIcon size={40} color="#ffffff" />
@@ -381,7 +423,8 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
           animate={{opacity: controls ? 1 : 0}} transition={transitions.panel}>
           <PlayerTitle item={item} position={status.position} duration={status.duration} dim={pending != null} />
           <Scrubber position={status.position} duration={status.duration} buffered={status.buffered}
-            pending={pending} rate={rate} onPress={togglePause} />
+            pending={pending} rate={rate} grabbed={grabbed} onPress={togglePause}
+            onDrag={controls ? scrubTouch : undefined} />
         </motion.View>
         {compare && (
           <CompareOverlay left={compare.left} right={compare.right} split={compare.split} span={pictureSpan(live)}
@@ -395,9 +438,9 @@ export function PlayerPage({item, active = true, onClose, onNext}) {
         )}
         {panel && playback && (
           <>
-            <View className="absolute inset-0 bg-black/50" />
+            <View className="absolute inset-0 bg-black/20" />
             <OptionsPanel tab={panel} onTab={setPanel} onClose={closePanel}
-              tabs={optionTabs({playback, status: live, subtitleTrack, upscale, pick,
+              tabs={optionTabs({playback, status: live, subtitleTrack, upscale, upscaling: Video.canUpscale(), pick,
                 autoplay: item.kind === 'episode' ? {series: seriesAutoplay} : null})} />
           </>
         )}

@@ -1,11 +1,11 @@
 import {useEffect, useState} from 'react';
-import {FocusScope, Image, Text, View, motion, transitions, useIsFocused} from '@ps5-react/core';
+import {DeviceInfo, FocusScope, Image, PanView, Text, View, motion, transitions, useIsFocused} from '@ps5-react/core';
 import {Brand} from './Brand.jsx';
 import {formatTime, localNow} from '../lib/clock.js';
 import {useSettings} from '../lib/settings.js';
 import {sized} from '../lib/jellyfin/api.js';
 import {FocusRing} from './FocusRing.jsx';
-import {GearIcon, HeartFilledIcon, HeartIcon} from './Icons.jsx';
+import {BatteryIcon, BoltIcon, GearIcon, HeartFilledIcon, HeartIcon, WifiIcon} from './Icons.jsx';
 
 const TAB_W = 112;
 
@@ -48,6 +48,39 @@ function Clock() {
   return <Text className="font-semi text-lg text-white">{formatTime(now, clock24)}</Text>;
 }
 
+// Battery and Wi-Fi beside the clock, as a phone's status bar shows them, where the device has them
+// (the Switch; a TV console has neither to show).
+const STATUS_MS = 20000;
+const LOW_BATTERY = 15;
+
+function readStatus() {
+  const {battery, charging, network, wifiSignal} = DeviceInfo.get();
+  return {battery, charging, wifi: network === 'wifi' ? wifiSignal ?? 3 : null};
+}
+
+function DeviceStatus() {
+  const [status, setStatus] = useState(readStatus);
+  useEffect(() => {
+    const id = setInterval(() => setStatus(readStatus()), STATUS_MS);
+    return () => clearInterval(id);
+  }, []);
+  const {battery, charging, wifi} = status;
+  if (battery == null && wifi == null) return null;
+  const low = battery != null && battery <= LOW_BATTERY && !charging;
+  return (
+    <View className="flex-row items-center gap-3">
+      {wifi != null && <WifiIcon size={20} bars={wifi} />}
+      {battery != null && (
+        <View className="flex-row items-center gap-1.5">
+          <Text className="font-semi text-sm text-white">{`${battery}%`}</Text>
+          <BatteryIcon size={12} level={battery / 100} fill={charging ? '#4ade80' : low ? '#f87171' : '#ffffff'} />
+          {charging && <BoltIcon size={14} />}
+        </View>
+      )}
+    </View>
+  );
+}
+
 function GearSlot() {
   return <GearIcon size={20} color={useIsFocused() ? '#0b0b12' : '#ffffff'} />;
 }
@@ -82,40 +115,44 @@ function Avatar({user, onPress}) {
 
 /**
  * Wordmark, the centred tab pill and the clock/avatar. Tabs share one width so the active pill glides by
- * translation; focusing a tab selects it (docs/NAVIGATION.md "Tabs"). `y` scrolls it off with Home's content.
+ * translation; focusing a tab selects it (docs/NAVIGATION.md "Tabs"). `y` scrolls it off with Home's content,
+ * as `pan` does under a finger.
  */
-export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, user, onAccount, onSettings}) {
+export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, pan, user, onAccount, onSettings}) {
   return (
-    <motion.View className="absolute left-0 right-0 top-0 h-[80px]" pointerEvents="box-none"
-      initial={false} animate={{y: -y}} transition={transitions.screen}>
-      <View className="absolute left-12 top-0 bottom-0 flex-row items-center">
-        <Brand />
-      </View>
-      <FocusScope focusKey="tabs" wrap>
-        <View className="absolute left-0 right-0 top-0 bottom-0 items-center justify-center" pointerEvents="box-none">
-          <View className="relative flex-row p-1 rounded-full bg-black/45 border border-white/10">
-            {/* Outside the pill, so the pill stays centred. */}
-            <View className="absolute left-[-56px] top-0 bottom-0 justify-center">
-              <FavoritesTab active={active === FAVORITES} onSelect={onSelect} onEnter={onEnter} />
-            </View>
-            <motion.View className="absolute top-1 left-1 w-28 h-9 rounded-full bg-white/20"
-              initial={false} animate={{x: Math.max(0, active) * TAB_W, opacity: active === FAVORITES ? 0 : 1}}
-              transition={transitions.focus} />
-            {labels.map((label, index) => (
-              <View key={label} focusKey={`tab:${label}`} nextFocusDown={downTo[label]}
-                onFocus={() => onSelect(index)} onPress={onEnter}
-                className="w-28 h-9 items-center justify-center rounded-full focused:bg-white">
-                <TabLabel label={label} active={index === active} />
+    <PanView pan={pan} className="absolute left-0 right-0 top-0 h-[80px]" pointerEvents="box-none">
+      <motion.View className="absolute inset-0" pointerEvents="box-none"
+        initial={false} animate={{y: -y}} transition={transitions.screen}>
+        <View className="absolute left-12 top-0 bottom-0 flex-row items-center">
+          <Brand />
+        </View>
+        <FocusScope focusKey="tabs" wrap>
+          <View className="absolute left-0 right-0 top-0 bottom-0 items-center justify-center" pointerEvents="box-none">
+            <View className="relative flex-row p-1 rounded-full bg-black/45 border border-white/10">
+              {/* Outside the pill, so the pill stays centred. */}
+              <View className="absolute left-[-56px] top-0 bottom-0 justify-center">
+                <FavoritesTab active={active === FAVORITES} onSelect={onSelect} onEnter={onEnter} />
               </View>
-            ))}
+              <motion.View className="absolute top-1 left-1 w-28 h-9 rounded-full bg-white/20"
+                initial={false} animate={{x: Math.max(0, active) * TAB_W, opacity: active === FAVORITES ? 0 : 1}}
+                transition={transitions.focus} />
+              {labels.map((label, index) => (
+                <View key={label} focusKey={`tab:${label}`} nextFocusDown={downTo[label]}
+                  onFocus={() => onSelect(index)} onPress={onEnter}
+                  className="w-28 h-9 items-center justify-center rounded-full focused:bg-white">
+                  <TabLabel label={label} active={index === active} />
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
-        <View className="absolute right-12 top-0 bottom-0 flex-row items-center gap-5" pointerEvents="box-none">
-          <Clock />
-          <SettingsButton onPress={onSettings} />
-          <Avatar user={user} onPress={onAccount} />
-        </View>
-      </FocusScope>
-    </motion.View>
+          <View className="absolute right-12 top-0 bottom-0 flex-row items-center gap-5" pointerEvents="box-none">
+            <DeviceStatus />
+            <Clock />
+            <SettingsButton onPress={onSettings} />
+            <Avatar user={user} onPress={onAccount} />
+          </View>
+        </FocusScope>
+      </motion.View>
+    </PanView>
   );
 }

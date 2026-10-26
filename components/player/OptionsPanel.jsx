@@ -1,7 +1,7 @@
 import {useEffect, useRef} from 'react';
 import {FocusScope, ScrollView, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
 import {CheckIcon} from '../Icons.jsx';
-import {remote} from '../../lib/remote.js';
+import {buttonName, touchscreen} from '../../lib/buttons.js';
 
 const rowKey = (tab, section, id) => `opt:${tab}:${section}:${id}`;
 const tabKey = id => `opt-tab:${id}`;
@@ -44,14 +44,14 @@ export function OptionsPanel({tabs, tab, onTab, onClose}) {
 
   return (
     <FocusScope trap onBack={() => { onClose(); return true; }} onAction={onAction}>
-      <View className="absolute right-0 top-0 bottom-0 w-[620px] bg-canvas px-10 pt-10 pb-8">
+      <View className="absolute right-0 top-0 bottom-0 w-[620px] bg-canvas/75 px-10 pt-10 pb-8">
         <View className="flex-row items-center gap-1 mb-7">
-          {!remote && <Hint>L1</Hint>}
+          {buttonName('l1') && <Hint>{buttonName('l1')}</Hint>}
           {tabs.map(candidate => (
             <Tab key={candidate.id} id={candidate.id} label={candidate.label} selected={candidate === current}
               onFocus={() => onTab(candidate.id)} />
           ))}
-          {!remote && <Hint>R1</Hint>}
+          {buttonName('r1') && <Hint>{buttonName('r1')}</Hint>}
         </View>
         {current.facts ? <Facts facts={current.facts} /> : current.columns ? (
           <View className="flex-1 flex-row gap-8">
@@ -86,7 +86,8 @@ function Hint({children}) {
 function Tab({id, label, selected, onFocus}) {
   return (
     <View focusKey={tabKey(id)} focusable onFocus={onFocus}
-      className={`h-[36px] px-3 rounded-full justify-center ${selected ? 'bg-white/15' : ''} focused:bg-white`}>
+      className={`${touchscreen ? 'h-[52px] px-4' : 'h-[36px] px-3'} rounded-full justify-center ${selected ? 'bg-white/15' : ''}
+        focused:bg-white`}>
       <TabLabel selected={selected}>{label}</TabLabel>
     </View>
   );
@@ -116,7 +117,8 @@ function Section({tab, index, section}) {
 
 function Row({focusKey, option, selected, onPress}) {
   return (
-    <View focusKey={focusKey} onPress={onPress} className="h-[44px] px-4 flex-row items-center gap-3 rounded-lg focused:bg-white">
+    <View focusKey={focusKey} onPress={onPress}
+      className={`${touchscreen ? 'h-[64px]' : 'h-[44px]'} px-4 flex-row items-center gap-3 rounded-lg focused:bg-white`}>
       <RowBody option={option} selected={selected} />
     </View>
   );

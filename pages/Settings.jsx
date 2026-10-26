@@ -1,12 +1,17 @@
 import {useEffect, useState} from 'react';
-import {FocusScope, ScrollView, Text, View, useFocusActions, useIsFocused} from '@ps5-react/core';
+import {FocusScope, ScrollView, Text, Video, View, useFocusActions, useIsFocused} from '@ps5-react/core';
 import {logOut} from '../lib/jellyfin/auth.js';
 import {setSetting, useSettings} from '../lib/settings.js';
 import {ActionRow, ChoiceRow, InfoRow, ToggleRow} from '../components/SettingRow.jsx';
 import {UpscalingPanel} from './Upscaling.jsx';
 import {keepPageActions} from '../lib/pageActions.js';
+import {buttonName} from '../lib/buttons.js';
 
 // `first`: where Right from the section's tab lands.
+// The seek buttons as this controller names them (L2 and R2 on a DualSense, ZL and ZR on a Switch).
+const TRIGGERS = `${buttonName('l2') ?? 'L2'} and ${buttonName('r2') ?? 'R2'}`;
+const SHOULDERS = `${buttonName('l1') ?? 'L1'} and ${buttonName('r1') ?? 'R1'}`;
+
 const SECTIONS = [
   {id: 'playback', label: 'Playback', first: 'set:bitrate'},
   {id: 'upscaling', label: 'Upscaling', first: settings => `upscaler:${settings.upscaler || 'off'}`},
@@ -59,11 +64,11 @@ function Playback({settings, left}) {
       <ChoiceRow focusKey="set:bitrate" label="Streaming quality" nextFocusLeft={left}
         about="Above this the server converts the film to a smaller stream."
         options={BITRATES} value={settings.maxBitrate} onChange={v => setSetting('maxBitrate', v)} />
-      <ChoiceRow focusKey="set:seek" label="Skip with L2 and R2" nextFocusLeft={left}
-        about="A tap skips this far; held, they scrub, faster the deeper they go. L1 and R1 always skip a minute."
+      <ChoiceRow focusKey="set:seek" label={`Skip with ${TRIGGERS}`} nextFocusLeft={left}
+        about={`A tap skips this far; held, they scrub, faster the deeper they go. ${SHOULDERS} always skip a minute.`}
         options={SEEK_STEPS} value={settings.seekStep} onChange={v => setSetting('seekStep', v)} />
       <ToggleRow focusKey="set:triggers" label="Trigger feedback" nextFocusLeft={left}
-        about="L2 and R2 stiffen past the point where scrubbing speeds up."
+        about={`${TRIGGERS} stiffen past the point where scrubbing speeds up.`}
         value={settings.triggerFeedback} onChange={v => setSetting('triggerFeedback', v)} />
       <ToggleRow focusKey="set:autoplay" label="Autoplay next episode" nextFocusLeft={left}
         about="As the credits roll, after a short countdown. A series can differ: set it in the player's options."
@@ -141,7 +146,9 @@ export function SettingsPage({session, section: initial = 'playback', active = t
   const {focus} = useFocusActions();
   useEffect(() => { focus(`settings:${initial}`); }, []);
   const left = `settings:${section}`;
-  const shown = SECTIONS.find(s => s.id === section);
+  // Upscaling only where the GPU runs the networks (the PS5).
+  const sections = SECTIONS.filter(s => s.id !== 'upscaling' || Video.canUpscale());
+  const shown = sections.find(s => s.id === section) ?? sections[0];
   return (
     <FocusScope trap={active} inert={!active} onBack={() => { onClose(); return true; }} onAction={keepPageActions}>
       <View className="w-screen h-screen bg-canvas">
@@ -151,7 +158,7 @@ export function SettingsPage({session, section: initial = 'playback', active = t
           <Text className="font-semi text-xl text-white">{shown.label}</Text>
         </View>
         <View className="absolute left-12 top-[168px] w-[260px] gap-2">
-          {SECTIONS.map(s => (
+          {sections.map(s => (
             <SectionTab key={s.id} section={s} active={s.id === section} onSelect={setSection}
               right={typeof s.first === 'function' ? s.first(settings) : s.first} />
           ))}

@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocusActions}
-  from '@ps5-react/core';
+import {AnimatePresence, AppRegistry, FocusScope, Screen, Screens, View, motion, transitions, useFocusActions,
+  usePan} from '@ps5-react/core';
 import {useInterfaceSounds} from './sounds.js';
 import {useMoveTracking} from './lib/lastMove.js';
 import {LaunchIntro} from './components/LaunchIntro.jsx';
@@ -84,6 +84,7 @@ function Main({session, active}) {
   const pageId = useRef(0);
   const [toast, setToast] = useState(null);
   const [homeY, setHomeY] = useState(0);
+  const homePan = usePan();
   const favoritesVersion = useFavoritesVersion();
   const progressVersion = useProgressVersion();
   const {data: loaded, error: homeError} = useLoad(session.token, loadHome);
@@ -198,7 +199,7 @@ function Main({session, active}) {
                 first is the Favorites heart, which would switch the page. */}
             <Screens active={tab} variants={screen} focusKey="content" onBack={() => focus(tabKey(tab))} preload>
               <Screen id={0}>
-                <HomePage home={home} onOpen={open} onPlay={play} scrollY={homeY} onScrollY={setHomeY} />
+                <HomePage home={home} onOpen={open} onPlay={play} scrollY={homeY} onScrollY={setHomeY} pan={homePan} />
               </Screen>
               <Screen id={1}><LibraryPage title="Movies" params={LIBRARIES.movies} onOpen={open} alphabetical /></Screen>
               <Screen id={2}><LibraryPage title="TV Shows" params={LIBRARIES.shows} onOpen={open} unit="SHOW" alphabetical /></Screen>
@@ -213,7 +214,7 @@ function Main({session, active}) {
               </Screen>
             </Screens>
             <TopBar labels={LABELS} active={tab} onSelect={select} onEnter={() => focus('content')}
-              downTo={DOWN_TO} y={tab === 0 ? homeY : 0} onAccount={() => openSettings('account')}
+              downTo={DOWN_TO} y={tab === 0 ? homeY : 0} pan={homePan} onAccount={() => openSettings('account')}
               onSettings={() => openSettings('playback')}
               user={{name: session.userName, image: session.userImage}} />
           </View>

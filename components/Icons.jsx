@@ -1,4 +1,4 @@
-import {Svg, Path, Circle, Line} from '@ps5-react/core';
+import {Svg, Path, Circle, Line, Rect} from '@ps5-react/core';
 import {px} from '../theme.js';
 
 // Svg width/height are render px; `size` is logical like the rest of the layout.
@@ -169,5 +169,42 @@ export const CloseIcon = ({size = 18, color = '#ffffff'}) => (
   <Icon size={size}>
     <Line x1="6.5" y1="6.5" x2="17.5" y2="17.5" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
     <Line x1="17.5" y1="6.5" x2="6.5" y2="17.5" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+  </Icon>
+);
+
+// Wi-Fi as a phone shows it: the dot and three arcs, as many lit as `bars` (0 to 3).
+const WIFI_ARCS = ['M9.2 16.2A4 4 0 0 1 14.8 16.2', 'M6.3 13.3A8 8 0 0 1 17.7 13.3', 'M3.5 10.5A12 12 0 0 1 20.5 10.5'];
+export const WifiIcon = ({size = 18, bars = 3, color = '#ffffff', dim = '#64748b'}) => (
+  <Icon size={size}>
+    <Circle cx="12" cy="19" r="1.7" fill={color} />
+    {WIFI_ARCS.map((d, index) => (
+      <Path key={d} d={d} fill="none" stroke={index < bars ? color : dim} strokeWidth="2.2" strokeLinecap="round" />
+    ))}
+  </Icon>
+);
+
+// A battery `level` (0..1) full, twice as wide as tall.
+export const BatteryIcon = ({size = 13, level = 1, color = '#ffffff', fill = color}) => (
+  <Svg width={px(size * 2)} height={px(size)} viewBox="0 0 28 14">
+    <Rect x="1" y="1" width="22" height="12" rx="3.5" fill="none" stroke={color} strokeWidth="1.6" />
+    <Rect x="24.2" y="4.5" width="2.3" height="5" rx="1.1" fill={color} />
+    {level > 0 && <Rect x="3" y="3" width={Math.max(1.5, 18 * Math.min(1, level))} height="8" rx="1.8" fill={fill} />}
+  </Svg>
+);
+
+export const BoltIcon = ({size = 14, color = '#ffffff'}) => (
+  <Icon size={size}><Path d="M13.5 2 5 13.5h6L10 22l9-12h-6.2z" fill={color} /></Icon>
+);
+
+// A circling arrow, back (counter-clockwise) or `forward`, for a seek step; its number goes inside.
+const SEEK = {
+  back: ['M12 5.5A7.5 7.5 0 1 1 4.5 13', 'M14.5 3L12 5.5L14.5 8'],
+  forward: ['M12 5.5A7.5 7.5 0 1 0 19.5 13', 'M9.5 3L12 5.5L9.5 8'],
+};
+export const SeekIcon = ({size = 18, forward = false, color = '#ffffff'}) => (
+  <Icon size={size}>
+    {SEEK[forward ? 'forward' : 'back'].map(d => (
+      <Path key={d} d={d} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    ))}
   </Icon>
 );

@@ -1,5 +1,6 @@
 import {memo, useCallback, useEffect, useRef, useState} from 'react';
-import {FocusScope, ScrollView, Text, View, motion, transitions, useIsScreenActive} from '@ps5-react/core';
+import {FocusScope, PanView, ScrollView, Text, View, motion, transitions, useFocusActions, useIsScreenActive, useTouching}
+  from '@ps5-react/core';
 import {HERO_ROTATE_MS, PREVIEW_DELAY_MS, SCREEN, px} from '../theme.js';
 import {clampText} from '../lib/format.js';
 import {Backdrop} from '../components/Backdrop.jsx';
@@ -11,13 +12,15 @@ import {MetaLine} from '../components/Meta.jsx';
 
 // The page scrolls by translating one column (hero block, then rows) instead of a ScrollView, so the
 // top bar can move with it in lockstep. Heights are fixed, which makes every row's offset known up front.
+// A finger scrolls it freely through `pan` (the top bar's too), detached from focus: nothing here
+// scrolls to focus or previews it until a button is pressed again.
 const HERO_H = 474;
 const ROW_H = 250;
 const ROW_TOP = 24; // a focused row's title sits this far below the screen top
 // The first row already shows under the hero, so focusing it keeps the page where it is.
+const maxOffset = count => Math.max(0, HERO_H + count * ROW_H + 40 - SCREEN.h);
 function rowOffset(index, count) {
-  const contentH = HERO_H + count * ROW_H + 40;
-  return index === 0 ? 0 : Math.max(0, Math.min(HERO_H + index * ROW_H - ROW_TOP, contentH - SCREEN.h));
+  return index === 0 ? 0 : Math.max(0, Math.min(HERO_H + index * ROW_H - ROW_TOP, maxOffset(count)));
 }
 
 // Hero overviews are clamped to three lines and also kept under the engine's 255-byte text node cap.
@@ -67,10 +70,13 @@ const Row = memo(function Row({row, onOpen, onPreview}) {
 /**
  * Home: a crossfading full-bleed backdrop, hero info for the featured title and rows below. The hero
  * rotates every 8 s while focus is on its buttons; resting on a card features that card instead.
- * `scrollY` (logical px) lives in the app because the top bar scrolls away with this page.
+ * `scrollY` (logical px) lives in the app because the top bar scrolls away with this page, as `pan`
+ * moves both under a finger.
  */
-export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY}) {
+export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY, pan}) {
   const active = useIsScreenActive();
+  const {touching} = useFocusActions();
+  const touched = useTouching();
   const heroItems = home?.hero ?? [];
   const rows = home?.rows ?? [];
   const [picked, setFeatured] = useState(null);
@@ -103,8 +109,14 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY}) {
     if (focusedRow.current && scrollY > 0) scrollTo(focusedRow.current);
   }, [rows.map(row => row.id).join('|')]);
 
+  // Back from the touchscreen, the page goes to where focus is again.
+  useEffect(() => {
+    if (!touched && focusedRow.current) scrollTo(focusedRow.current);
+  }, [touched]);
+
   const preview = useCallback((item, rowId) => {
     focusedRow.current = rowId;
+    if (touching()) return;
     scrollTo(rowId);
     setRotating(false);
     clearTimeout(pending.current);
@@ -112,6 +124,7 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY}) {
   }, []);
   const heroFocus = useCallback(() => {
     focusedRow.current = null;
+    if (touching()) return;
     onScrollY(0);
     clearTimeout(pending.current);
     setRotating(true);
@@ -133,13 +146,17 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY}) {
             bg-gradient-to-b from-black/60 to-transparent" />
         </>
       )}
-      <motion.View className="absolute left-0 right-0 top-0" initial={false} animate={{y: -scrollY}}
-        transition={transitions.screen}>
-        <View style={{height: px(HERO_H)}}>
-          <HeroInfo item={featured} onPlay={onPlay} onMore={onOpen} onFocus={heroFocus} />
-        </View>
-        {rows.map(row => <Row key={row.id} row={row} onOpen={onOpen} onPreview={preview} />)}
-      </motion.View>
+      {/* Hidden, it lets go of what a finger scrolled, and the top bar with it. */}
+      <PanView pan={pan} offset={active ? scrollY : 0} max={active ? maxOffset(rows.length) : 0}
+        className="absolute inset-0" pointerEvents="box-none">
+        <motion.View className="absolute left-0 right-0 top-0" initial={false} animate={{y: -scrollY}}
+          transition={transitions.screen}>
+          <View style={{height: px(HERO_H)}}>
+            <HeroInfo item={featured} onPlay={onPlay} onMore={onOpen} onFocus={heroFocus} />
+          </View>
+          {rows.map(row => <Row key={row.id} row={row} onOpen={onOpen} onPreview={preview} />)}
+        </motion.View>
+      </PanView>
     </View>
   );
 }
