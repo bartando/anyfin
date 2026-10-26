@@ -1,3 +1,4 @@
+import {memo} from 'react';
 import {Text, View, useIsFocused} from '@react-on-anything/core';
 import {FocusRing} from './FocusRing.jsx';
 
@@ -15,8 +16,10 @@ function Ring() {
 }
 
 /** Glassy pill button: lighter for the primary action. Focus turns it solid white with the ring (no
- * scale: the ring would sit inside the transformed node and repaint all of it every frame). */
-export function Button({label, icon: Icon, primary = false, autoFocus, onPress, onFocus, focusKey, nextFocusUp}) {
+ * scale: the ring would sit inside the transformed node and repaint all of it every frame). Memoized,
+ * so a parent re-rendering with the same (stable) callbacks leaves it alone. */
+export const Button = memo(function Button({label, icon: Icon, primary = false, autoFocus, onPress, onFocus, focusKey,
+  nextFocusUp}) {
   return (
     <View autoFocus={autoFocus} focusKey={focusKey} nextFocusUp={nextFocusUp} onPress={onPress} onFocus={onFocus}
       className={`h-[48px] px-6 flex-row items-center gap-2 rounded-full border
@@ -27,7 +30,7 @@ export function Button({label, icon: Icon, primary = false, autoFocus, onPress, 
       <Ring />
     </View>
   );
-}
+});
 
 function IconSlot({Icon, primary}) {
   const focused = useIsFocused();
