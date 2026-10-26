@@ -1,15 +1,17 @@
-import {useEffect, useMemo, useState} from 'react';
-import {View, motion} from '@react-on-anything/core';
-import {RENDER_SCALE, px} from '../theme.js';
+import {useEffect, useLayoutEffect, useMemo, useState} from 'react';
+import {Animated, View, useAnimatedValue} from '@react-on-anything/core';
+import {px} from '../theme.js';
 import {lastMove} from '../lib/lastMove.js';
 
 const SWEEP_EVERY_MS = 7000;
 // A pass after the first is a reflection caught again, not a new one: dimmer.
 const REPEAT_STRENGTH = 0.55;
-const SWEEP = {type: 'tween', duration: 1.4, delay: 0.08, ease: [0.32, 0.08, 0.18, 1]};
-const SETTLE = {type: 'tween', duration: 0.5, ease: 'easeOut'};
+// Engine animations (milliseconds), not motion: the glass mounts on every focus move, and motion's
+// per-element bookkeeping was the costliest part of one.
+const SWEEP = {duration: 1400, delay: 80, easing: {x1: 0.32, y1: 0.08, x2: 0.18, y2: 1}};
+const SETTLE = {duration: 500, easing: 'easeOut'};
 // The rim and hairline wait for the card to finish scaling up, or they would show outside it.
-const SETTLE_LATE = {...SETTLE, delay: 0.15};
+const SETTLE_LATE = {...SETTLE, delay: 150};
 
 const WARM = alpha => `rgba(255,250,240,${+alpha.toFixed(3)})`;
 const ANGLE = 112;
@@ -92,29 +94,40 @@ export function Glass({w, h, radius, scale}) {
   const first = useMemo(() => streak(sw, sh, 1), [sw, sh]);
   const again = useMemo(() => streak(sw, sh, REPEAT_STRENGTH), [sw, sh]);
   const s = pass === 0 ? first : again;
-  // Motion's x is logical px; the streak is worked out in render px.
-  const [from, to] = (toRight ? [s.enter, s.leave] : [s.leave, s.enter]).map(v => v / RENDER_SCALE);
+  const [from, to] = toRight ? [s.enter, s.leave] : [s.leave, s.enter];
+  const coat = useAnimatedValue(0), rim = useAnimatedValue(0), x = useAnimatedValue(from);
+  useEffect(() => {
+    const run = Animated.parallel([Animated.timing(coat, {toValue: 1, ...SETTLE}),
+      Animated.timing(rim, {toValue: 1, ...SETTLE_LATE})]);
+    run.start();
+    return () => run.stop();
+  }, []);
+  // Each pass starts over from the side the light enters.
+  useLayoutEffect(() => {
+    x.setValue(from);
+    const run = Animated.timing(x, {toValue: to, ...SWEEP});
+    run.start();
+    return () => run.stop();
+  }, [pass]);
   const fill = {position: 'absolute', left: 0, top: 0, width: sw, height: sh, borderRadius: r};
   const hair = px(1);
 
   return (
     <View pointerEvents="none" style={{position: 'absolute', left: px((w - w * scale) / 2), top: px((h - h * scale) / 2),
       width: sw, height: sh, borderRadius: r, roundedClip: true}}>
-      <motion.View initial={{opacity: 0}} animate={{opacity: 1}} transition={SETTLE}
-        style={{...fill, backgroundGradient: COAT}} />
-      <motion.View initial={{opacity: 0}} animate={{opacity: 1}} transition={SETTLE_LATE}
-        style={{...fill, borderWidth: hair, borderColor: 'rgba(255,255,255,0.12)'}} />
-      <motion.View initial={{opacity: 0}} animate={{opacity: 1}} transition={SETTLE_LATE}
-        style={{position: 'absolute', left: r, top: 0, width: sw - 2 * r, height: hair, backgroundGradient: HAIR}} />
-      <motion.View key={pass} initial={{x: from}} animate={{x: to}} transition={SWEEP}
-        style={{position: 'absolute', left: 0, top: 0, width: s.bw, height: sh, mixBlendMode: 'plus-lighter'}}>
+      <Animated.View style={{...fill, opacity: coat, backgroundGradient: COAT}} />
+      <Animated.View style={{...fill, opacity: rim, borderWidth: hair, borderColor: 'rgba(255,255,255,0.12)'}} />
+      <Animated.View style={{position: 'absolute', left: r, top: 0, width: sw - 2 * r, height: hair, opacity: rim,
+        backgroundGradient: HAIR}} />
+      <Animated.View style={{position: 'absolute', left: 0, top: 0, width: s.bw, height: sh, mixBlendMode: 'plus-lighter',
+        transform: [{translateX: x}]}}>
         {s.layers.map((gradient, i) => (
           <View key={i} style={{position: 'absolute', left: 0, top: 0, width: s.bw, height: sh, backgroundGradient: gradient}} />
         ))}
         {/* Where the streak crosses the top and bottom edges, the rim catches it. */}
         <View style={glint(s.top, 0, px(40), hair + px(0.5), 0.94)} />
         <View style={glint(s.bottom, sh - hair - px(0.5), px(30), hair + px(0.5), 0.44)} />
-      </motion.View>
+      </Animated.View>
     </View>
   );
 }
