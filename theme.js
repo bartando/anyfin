@@ -28,15 +28,17 @@ export const PREVIEW_DELAY_MS = 350;
 // Image width per use, in render px: the server scales art to it. Images decode at their box size and
 // are never enlarged, so a smaller source is upscaled on every repaint. Backdrops stop at 1280: a
 // server that proxies TMDB rounds widths up to its sizes, and past w1280 that is the original, which
-// can be over the 5 MP decode limit.
+// can be over the 5 MP decode limit. The widths below are a 4K layout's (render scale 3); smaller layouts
+// ask for their own box sizes, since a larger source is only decoded and shrunk again.
+const box = n => Math.round(n * RENDER_SCALE / 3);
 export const SIZES = {
-  hero: 1280,
-  card: 720,
-  poster: 528,
-  logo: 800,
-  cardLogo: 400,
-  profile: 400,
-  portrait: 600,
+  hero: Math.min(1280, box(3840)),
+  card: box(720),
+  poster: box(528),
+  logo: box(800),
+  cardLogo: box(400),
+  profile: box(400),
+  portrait: box(600),
 };
 
 export const COLORS = {

@@ -83,7 +83,8 @@ function facts(playback, status) {
     ['Version', [v.video, v.megabits ? `${v.megabits.toFixed(1)} Mbps` : ''].filter(Boolean).join(' · ') || v.name],
     ['Video', status ? `${(status.videoCodec ?? '').toUpperCase()} · ${status.width}×${status.height}` : '—'],
     ['Decoder', !status ? '—' : status.decoder === 'sceVideodec2' ? 'Hardware'
-      : status.decoder?.startsWith('MediaCodec') ? 'Hardware (MediaCodec)' : 'Software (FFmpeg)'],
+      : status.decoder?.startsWith('MediaCodec') ? 'Hardware (MediaCodec)'
+      : status.decoder === 'NVDEC' ? 'Hardware (NVDEC)' : 'Software (FFmpeg)'],
     ['Audio', audio ? [audio.label, audio.detail].filter(Boolean).join(' · ') : '—'],
     ['Buffered', status ? `${Math.max(0, Math.round(status.buffered - status.position))} s ahead` : '—'],
     ['Frames', status ? `${status.shownFrames} shown · ${status.droppedFrames} dropped` : '—'],
