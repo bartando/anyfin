@@ -1,4 +1,4 @@
-import {memo, useRef, useState} from 'react';
+import {memo, useMemo, useRef, useState} from 'react';
 import {FocusScope, ScrollView, Text, View, useIsFocused} from '@react-on-anything/core';
 import {CARD, POSTER, captionedRowH, focusRoom, px} from '../theme.js';
 import {clampText, clean, splitText} from '../lib/format.js';
@@ -123,6 +123,32 @@ function playLabel(item, next) {
   return item.progress > 0 && item.positionMinutes > 0 ? `Resume ${item.positionMinutes} min` : 'Play';
 }
 
+// The shelves are memoized: each load that lands (the full item, similar titles, the trailer) renders the
+// page again, and on the Shield every card in them took part, 85 to 120ms of React a load.
+const CastShelf = memo(function CastShelf({cast, onPerson}) {
+  return (
+    <Shelf title="Cast" height={CAST_H} anchor>
+      {cast.map(person => <PersonBubble key={person.id} person={person} onPress={onPerson} />)}
+    </Shelf>
+  );
+});
+
+const StillsShelf = memo(function StillsShelf({item, stills, onStills}) {
+  return (
+    <Shelf title="Stills" height={STILLS_H} room={focusRoom(CARD.h)} anchor>
+      {stills.map((uri, index) => <StillCard key={uri} uri={uri} index={index} onPress={at => onStills(item, at)} />)}
+    </Shelf>
+  );
+});
+
+const SimilarShelf = memo(function SimilarShelf({similar, onOpen}) {
+  return (
+    <Shelf title="More like this" height={SIMILAR_H} room={focusRoom(POSTER.h)} anchor>
+      {similar.map(related => <CaptionedPoster key={related.key} item={related} onPress={onOpen} />)}
+    </Shelf>
+  );
+});
+
 /**
  * "More Info": backdrop, logo, meta, tagline, the overview and actions, then for a series its seasons
  * and episodes, then cast and similar titles, which open a person page or another title. The item
@@ -132,7 +158,7 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
   // Coming back from the player, the position it stopped at loads again: "Resume", the next episode.
   const progress = useProgressVersion();
   const {data: live, error: liveError} = useLoad(`item-${shown.id}`, () => loadItem(shown.id), progress);
-  const item = live ? {...shown, ...live} : shown;
+  const item = useMemo(() => (live ? {...shown, ...live} : shown), [shown, live]);
   const series = item.kind === 'tv';
   const {data: similar, error: similarError} = useLoad(`similar-${shown.id}`, () => loadSimilar(shown.id));
   const {data: seasons, error: seasonsError} = useLoad(series ? `seasons-${shown.id}` : null, () => loadSeasons(shown.id));
@@ -193,22 +219,10 @@ export function DetailPage({item: shown, active = true, onClose, onPlay, onOpen,
               </View>
             )}
             {!live && !liveError && <PeopleSkeleton title="Cast" count={PEOPLE_SHOWN} height={CAST_H} />}
-            {cast.length > 0 && (
-              <Shelf title="Cast" height={CAST_H} anchor>
-                {cast.map(person => <PersonBubble key={person.id} person={person} onPress={onPerson} />)}
-              </Shelf>
-            )}
-            {stills.length > 1 && (
-              <Shelf title="Stills" height={STILLS_H} room={focusRoom(CARD.h)} anchor>
-                {stills.map((uri, index) => <StillCard key={uri} uri={uri} index={index} onPress={at => onStills(item, at)} />)}
-              </Shelf>
-            )}
+            {cast.length > 0 && <CastShelf cast={cast} onPerson={onPerson} />}
+            {stills.length > 1 && <StillsShelf item={item} stills={stills} onStills={onStills} />}
             {!similar && !similarError && <PostersSkeleton title="More like this" count={POSTERS_SHOWN} height={SIMILAR_H} />}
-            {similar?.length > 0 && (
-              <Shelf title="More like this" height={SIMILAR_H} room={focusRoom(POSTER.h)} anchor>
-                {similar.map(related => <CaptionedPoster key={related.key} item={related} onPress={onOpen} />)}
-              </Shelf>
-            )}
+            {similar?.length > 0 && <SimilarShelf similar={similar} onOpen={onOpen} />}
           </View>
         </ScrollView>
       </View>
