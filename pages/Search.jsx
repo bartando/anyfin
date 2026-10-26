@@ -35,7 +35,8 @@ const Results = memo(function Results({query, items, onOpen}) {
 });
 
 /** Search: the letter-grid keyboard searches the server's library; results are a virtualized grid. */
-export function SearchPage({onOpen}) {
+// Memoized: a tab switch re-renders the app, and a page it left alone need not.
+export const SearchPage = memo(function SearchPage({onOpen}) {
   const input = useTextInput('', 24);
   const query = input.text.trim();
   const [results, setResults] = useState(NO_RESULTS);
@@ -69,4 +70,4 @@ export function SearchPage({onOpen}) {
       <Results query={results.query} items={results.query ? results.items : picks ?? NO_RESULTS.items} onOpen={onOpen} />
     </View>
   );
-}
+});

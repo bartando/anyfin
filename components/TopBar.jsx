@@ -6,6 +6,7 @@ import {useSettings} from '../lib/settings.js';
 import {sized} from '../lib/jellyfin/api.js';
 import {FocusRing} from './FocusRing.jsx';
 import {BatteryIcon, BoltIcon, GearIcon, HeartFilledIcon, HeartIcon, WifiIcon} from './Icons.jsx';
+import {useHomeY} from '../lib/homeScroll.js';
 
 const TAB_W = 112;
 
@@ -118,11 +119,23 @@ function Avatar({user, onPress}) {
  * translation; focusing a tab selects it (docs/NAVIGATION.md "Tabs"). `y` scrolls it off with Home's content,
  * as `pan` does under a finger.
  */
-export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, pan, user, onAccount, onSettings}) {
+// The bar's slide with Home's scroll, on Home: alone in reading the offset, it re-renders when Home
+// scrolls and the bar it holds does not.
+function Slide({followHome, children}) {
+  const homeY = useHomeY();
+  return (
+    <motion.View className="absolute inset-0" pointerEvents="box-none"
+      initial={false} animate={{y: followHome ? -homeY : 0}} transition={transitions.screen}>
+      {children}
+    </motion.View>
+  );
+}
+
+export function TopBar({labels, active, onSelect, onEnter, downTo = {}, followHome = false, pan, user, onAccount,
+  onSettings}) {
   return (
     <PanView pan={pan} className="absolute left-0 right-0 top-0 h-[80px]" pointerEvents="box-none">
-      <motion.View className="absolute inset-0" pointerEvents="box-none"
-        initial={false} animate={{y: -y}} transition={transitions.screen}>
+      <Slide followHome={followHome}>
         <View className="absolute left-12 top-0 bottom-0 flex-row items-center">
           <Brand />
         </View>
@@ -152,7 +165,7 @@ export function TopBar({labels, active, onSelect, onEnter, downTo = {}, y = 0, p
             <Avatar user={user} onPress={onAccount} />
           </View>
         </FocusScope>
-      </motion.View>
+      </Slide>
     </PanView>
   );
 }

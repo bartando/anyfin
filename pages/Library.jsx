@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Controller, ScrollView, Text, View, VirtualList, useNavigationEvents} from '@react-on-anything/core';
 import {POSTER, PREVIEW_DELAY_MS, px} from '../theme.js';
 import {LETTERS, clampText, clean, formatCount} from '../lib/format.js';
@@ -103,7 +103,8 @@ const GAP = {width: px(POSTER.w), height: px(POSTER.h)};
  * focused poster's title, meta and art fill the header. `params` is the Jellyfin items query;
  * `version` reloads it (Favorites after a toggle).
  */
-export function LibraryPage({title, params, version = 0, onOpen, empty, facts, unit = 'TITLE', alphabetical = false}) {
+// Memoized: a tab switch re-renders the app, and a page it left alone need not.
+export const LibraryPage = memo(function LibraryPage({title, params, version = 0, onOpen, empty, facts, unit = 'TITLE', alphabetical = false}) {
   const key = `${JSON.stringify(params)}#${version}`;
   const {data, total, error, need, reload, seq, changesSince} = usePagedItems(params, key);
   const [focused, setFocused] = useState(0);
@@ -262,4 +263,4 @@ export function LibraryPage({title, params, version = 0, onOpen, empty, facts, u
       )}
     </View>
   );
-}
+});

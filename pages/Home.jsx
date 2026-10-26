@@ -9,6 +9,7 @@ import {Button} from '../components/Button.jsx';
 import {InfoIcon, PlayIcon} from '../components/Icons.jsx';
 import {Logo} from '../components/Logo.jsx';
 import {MetaLine} from '../components/Meta.jsx';
+import {setHomeY, useHomeY} from '../lib/homeScroll.js';
 
 // The page scrolls by translating one column (hero block, then rows) instead of a ScrollView, so the
 // top bar can move with it in lockstep. Heights are fixed, which makes every row's offset known up front.
@@ -70,10 +71,12 @@ const Row = memo(function Row({row, onOpen, onPreview}) {
 /**
  * Home: a crossfading full-bleed backdrop, hero info for the featured title and rows below. The hero
  * rotates every 8 s while focus is on its buttons; resting on a card features that card instead.
- * `scrollY` (logical px) lives in the app because the top bar scrolls away with this page, as `pan`
- * moves both under a finger.
+ * The scroll offset is lib/homeScroll.js's, which the top bar follows too, as `pan` moves both under a
+ * finger.
  */
-export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY, pan}) {
+// Memoized: a tab switch re-renders the app, and a page it left alone need not.
+export const HomePage = memo(function HomePage({home, onOpen, onPlay, pan}) {
+  const scrollY = useHomeY();
   const active = useIsScreenActive();
   const {touching} = useFocusActions();
   const touched = useTouching();
@@ -89,7 +92,7 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY, pan}) {
   const focusedRow = useRef(null);
   const scrollTo = rowId => {
     const at = latestRows.current.findIndex(row => row.id === rowId);
-    if (at >= 0) onScrollY(rowOffset(at, latestRows.current.length));
+    if (at >= 0) setHomeY(rowOffset(at, latestRows.current.length));
   };
 
   useEffect(() => {
@@ -125,7 +128,7 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY, pan}) {
   const heroFocus = useCallback(() => {
     focusedRow.current = null;
     if (touching()) return;
-    onScrollY(0);
+    setHomeY(0);
     clearTimeout(pending.current);
     setRotating(true);
   }, []);
@@ -159,4 +162,4 @@ export function HomePage({home, onOpen, onPlay, scrollY = 0, onScrollY, pan}) {
       </PanView>
     </View>
   );
-}
+});
