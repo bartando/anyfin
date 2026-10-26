@@ -6,6 +6,7 @@ import {normalizeAddress, probeServer} from '../lib/jellyfin/api.js';
 import {discoverServers} from '../lib/jellyfin/discovery.js';
 import {loadPublicUsers, quickConnect, quickConnectEnabled, signInWithPassword} from '../lib/jellyfin/auth.js';
 import {Button} from '../components/Button.jsx';
+import {buttonName} from '../lib/buttons.js';
 import {Keyboard, TextField, useTextInput} from '../components/Keyboard.jsx';
 import {PersonBubble} from '../components/People.jsx';
 import {BackIcon, LockIcon, ServerIcon} from '../components/Icons.jsx';
@@ -41,7 +42,7 @@ function KeyboardStep({input, layout, placeholder, masked, submitLabel, onSubmit
       <Keyboard edit={input.edit} layout={layout} onSubmit={onSubmit} />
       <View className="flex-row items-center gap-3">
         <Button focusKey="submit" label={submitLabel} primary onPress={onSubmit} />
-        <Text className="font-inter text-xs text-slate-400">or R2</Text>
+        {buttonName('r2') && <Text className="font-inter text-xs text-slate-400">{`or ${buttonName('r2')}`}</Text>}
       </View>
       <Status text={status} error={error} />
     </View>

@@ -2,7 +2,8 @@ import {useEffect, useState} from 'react';
 import {FocusScope, Text, View, motion, transitions} from '@ps5-react/core';
 import {SCREEN, px} from '../../theme.js';
 import {SMOOTH_MS, UPSCALERS} from '../../lib/upscalers.js';
-import {CircleGlyph, CloseIcon, SquareGlyph, TriangleGlyph} from '../Icons.jsx';
+import {buttonName} from '../../lib/buttons.js';
+import {FaceGlyph} from '../FaceGlyph.jsx';
 
 // The hint at the bottom fades this long after the last input.
 const HINT_MS = 4000;
@@ -55,20 +56,20 @@ export function CompareOverlay({left, right, split, span, paused, activity, onPr
           <Text className="font-semi text-md text-canvas">{'‹ ›'}</Text>
         </View>
         <View className="absolute top-[28px] items-end" style={{left: px(leftEnd - LABEL_W), width: px(LABEL_W)}}>
-          <Label shoulder="L1" model={a} />
+          <Label shoulder={buttonName('l1')} model={a} />
         </View>
         <View className="absolute top-[28px] items-start" style={{left: px(rightStart), width: px(LABEL_W)}}>
-          <Label shoulder="R1" model={b} />
+          <Label shoulder={buttonName('r1')} model={b} />
         </View>
         <motion.View className="absolute left-0 right-0 bottom-[28px] items-center" initial={false}
           animate={{opacity: hint ? 1 : 0}} transition={transitions.panel}>
           <View className="flex-row items-center gap-5 h-[40px] px-5 rounded-full bg-black/55">
             <Key text="← →" label="Slide" />
-            <Key text="L1 R1" label="Models" />
-            <Key glyph={TriangleGlyph} label="Swap" />
-            <Key glyph={CloseIcon} label={paused ? 'Play' : 'Pause'} />
-            <Key glyph={SquareGlyph} label="Keep right" />
-            <Key glyph={CircleGlyph} label="Done" />
+            <Key text={`${buttonName('l1')} ${buttonName('r1')}`} label="Models" />
+            <Key glyph="triangle" label="Swap" />
+            <Key glyph="cross" label={paused ? 'Play' : 'Pause'} />
+            <Key glyph="square" label="Keep right" />
+            <Key glyph="circle" label="Done" />
           </View>
           {heavy && (
             <Text className="font-inter text-xs text-amber-300 mt-2">
@@ -93,10 +94,10 @@ function Label({shoulder, model}) {
   );
 }
 
-function Key({text, glyph: Glyph, label}) {
+function Key({text, glyph, label}) {
   return (
     <View className="flex-row items-center gap-2">
-      {Glyph ? <Glyph size={16} /> : <Text className="font-semi text-xs text-white/80">{text}</Text>}
+      {glyph ? <FaceGlyph button={glyph} size={16} /> : <Text className="font-semi text-xs text-white/80">{text}</Text>}
       <Text className="font-inter text-xs text-white">{label}</Text>
     </View>
   );

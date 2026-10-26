@@ -1,8 +1,10 @@
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Controller, FocusScope, Text, View, useFocus, useIsFocused} from '@ps5-react/core';
 import {px} from '../theme.js';
-import {SearchIcon, SquareGlyph, TriangleGlyph} from './Icons.jsx';
+import {FaceGlyph} from './FaceGlyph.jsx';
+import {SearchIcon} from './Icons.jsx';
 import {remote} from '../lib/remote.js';
+import {buttonName} from '../lib/buttons.js';
 
 const KEY = 52, KEY_GAP = 6;
 const DIGITS = '1234567890'.split('');
@@ -52,7 +54,7 @@ function KeyLabel({children}) {
 }
 
 /** An action key: its word, and in the corner the controller button that does the same (none on a remote). */
-function ActionContent({label, Glyph, button}) {
+function ActionContent({label, glyph, button}) {
   const focused = useIsFocused();
   const color = focused ? '#0b0b12' : '#d9d4ff';
   return (
@@ -60,8 +62,8 @@ function ActionContent({label, Glyph, button}) {
       <Text focused={focused} className="font-semi text-sm text-[#d9d4ff] focused:text-canvas">{label}</Text>
       {!remote && (
         <View className="absolute top-[5px] right-[6px] opacity-70">
-          {Glyph ? <Glyph size={10} color={color} /> : button ? (
-            <Text focused={focused} className="font-semi text-[10px] leading-[12px] text-[#d9d4ff] focused:text-canvas">{button}</Text>
+          {glyph ? <FaceGlyph button={glyph} size={10} color={color} /> : button ? (
+            <Text focused={focused} className="font-semi text-[10px] leading-[12px] text-[#d9d4ff] focused:text-canvas">{buttonName(button)}</Text>
           ) : null}
         </View>
       )}
@@ -90,9 +92,9 @@ const Key = memo(function Key({name, value, wide = 1, action = false, onPress, c
   );
 });
 
-const SPACE = <ActionContent label="Space" Glyph={TriangleGlyph} />;
-const DELETE = <ActionContent label="Delete" Glyph={SquareGlyph} />;
-const CLEAR = <ActionContent label="Clear" button="L2" />;
+const SPACE = <ActionContent label="Space" glyph="triangle" />;
+const DELETE = <ActionContent label="Delete" glyph="square" />;
+const CLEAR = <ActionContent label="Clear" button="l2" />;
 
 // One element, so the field re-rendering on every key leaves the icon's vector alone.
 const FIELD_ICON = <SearchIcon size={20} color="#a9a0ff" />;
@@ -113,7 +115,7 @@ export const TextField = memo(function TextField({text, cursor, placeholder, mas
           : <Text className="font-inter text-md text-white">{shown.slice(cursor)}</Text>)
           : <Text className="font-inter text-md text-slate-400">{placeholder}</Text>}
       </View>
-      {text && !remote ? <View className="flex-row gap-1"><ButtonBadge>L1</ButtonBadge><ButtonBadge>R1</ButtonBadge></View> : null}
+      {text && !remote ? <View className="flex-row gap-1"><ButtonBadge>{buttonName('l1')}</ButtonBadge><ButtonBadge>{buttonName('r1')}</ButtonBadge></View> : null}
     </View>
   );
 });

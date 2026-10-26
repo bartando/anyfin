@@ -4,7 +4,8 @@ import {clean} from '../../lib/format.js';
 import {thumbUrl} from '../../lib/art.js';
 import {episodeCode} from '../../lib/jellyfin/items.js';
 import {FocusRing} from '../FocusRing.jsx';
-import {CircleGlyph, PlayIcon} from '../Icons.jsx';
+import {FaceGlyph} from '../FaceGlyph.jsx';
+import {PlayIcon} from '../Icons.jsx';
 import {remote} from '../../lib/remote.js';
 
 /**
@@ -31,7 +32,7 @@ export function UpNext({next, seconds, onPlay}) {
             <PlayLabel />
           </View>
           <View className="flex-row items-center gap-1">
-            {!remote && <CircleGlyph size={14} color="rgba(255,255,255,0.55)" />}
+            <FaceGlyph button="circle" size={14} color="rgba(255,255,255,0.55)" />
             <Text className="font-inter text-xs text-white/55">{remote ? 'Back hides' : 'Hide'}</Text>
           </View>
         </View>

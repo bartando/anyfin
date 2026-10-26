@@ -3,7 +3,8 @@ import {View, motion, transitions, useIsFocused} from '@ps5-react/core';
 import {FOCUS_LIFT, FOCUS_SCALE, RING_GAP, px} from '../theme.js';
 import {FocusRing} from './FocusRing.jsx';
 import {Glass} from './Glass.jsx';
-import {MenuGlyph, TriangleGlyph} from './Icons.jsx';
+import {FaceGlyph} from './FaceGlyph.jsx';
+import {MenuGlyph} from './Icons.jsx';
 import {remote} from '../lib/remote.js';
 import {cardBlurred, cardFocused} from '../lib/focusedCard.js';
 
@@ -25,7 +26,7 @@ function TriangleHint({w, h, scale}) {
       className="absolute rounded-full bg-black/50 border border-white/30 items-center justify-center"
       style={{left: px(left), top: px(top), width: px(HINT), height: px(HINT)}}>
       {remote ? <MenuGlyph size={12} color="rgba(255,255,255,0.9)" />
-        : <TriangleGlyph size={12} color="rgba(255,255,255,0.9)" />}
+        : <FaceGlyph button="triangle" size={12} color="rgba(255,255,255,0.9)" />}
     </motion.View>
   );
 }
