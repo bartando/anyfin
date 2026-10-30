@@ -11,10 +11,9 @@ import {PosterCard} from '../components/Cards.jsx';
 import {MetaLine} from '../components/Meta.jsx';
 
 const BACKDROP = {w: 760, h: 428};
-// Holding Up or Down this many repeats switches from rows to letters, as Infuse does; a pause this
-// long between repeats ends it.
-const HOLD_MOVES = 5;
-const REPEAT_GAP_MS = 260;
+// Holding Up or Down this long switches from rows to letters, as Infuse does; fast presses never do.
+// A pause this long between moves ends it.
+const HOLD_LETTERS_MS = 1500;
 const LETTER_IDLE_MS = 450;
 const NO_LETTERS = {first: new Map(), starts: [], available: new Set(), letterAt: () => null};
 
@@ -136,33 +135,31 @@ export const LibraryPage = memo(function LibraryPage({title, params, version = 0
 
   const listRef = useRef(null);
   const focusedAt = useRef(-1);
-  const hold = useRef({direction: null, count: 0, last: 0, letter: null, timer: null}).current;
+  // When Up and Down went down, while they are held: a repeat is the same press, a tap a new one.
+  const hold = useRef({since: {up: 0, down: 0}, letter: null, timer: null}).current;
   const [jumpLetter, setJumpLetter] = useState(null);
   useEffect(() => () => clearTimeout(hold.timer), []);
+  useEffect(() => Controller.subscribe(event => {
+    if (event.button !== 'up' && event.button !== 'down') return;
+    if (event.type === 'press') hold.since[event.button] = Date.now();
+    else if (event.type === 'release') hold.since[event.button] = 0;
+  }), []);
 
-  // A held Up/Down repeats a move each tick. After HOLD_MOVES of them each repeat jumps to the next
-  // letter that has titles instead, with a tick of the motors; the pause after release ends it.
+  // A held Up/Down repeats a move each tick. After HOLD_LETTERS_MS of holding each repeat jumps to the
+  // next letter that has titles instead, with a tick of the motors; the pause after release ends it.
   useNavigationEvents(event => {
     // While a jump lands, focus is nowhere for a frame or two and moves report blocked: the hold goes on.
     if (event.type !== 'move' && !(event.type === 'blocked' && hold.letter)) return;
     const vertical = event.direction === 'up' || event.direction === 'down';
     // Mid-jump the old card can lose focus before the new one takes it; the hold carries on.
-    if (!alphabetical || !vertical || (focusedAt.current < 0 && !hold.letter) || !index.available.size) {
-      hold.direction = null;
-      hold.count = 0;
-      return;
-    }
-    const now = Date.now();
-    hold.count = hold.direction === event.direction && now - hold.last < REPEAT_GAP_MS ? hold.count + 1 : 1;
-    hold.direction = event.direction;
-    hold.last = now;
+    if (!alphabetical || !vertical || (focusedAt.current < 0 && !hold.letter) || !index.available.size) return;
     clearTimeout(hold.timer);
     hold.timer = setTimeout(() => {
       hold.letter = null;
-      hold.count = 0;
       setJumpLetter(null);
     }, LETTER_IDLE_MS);
-    if (hold.count < HOLD_MOVES) return;
+    const since = hold.since[event.direction];
+    if (!since || Date.now() - since < HOLD_LETTERS_MS) return;
     const from = LETTERS.indexOf(hold.letter ?? index.letterAt(Math.max(0, focusedAt.current)));
     const step = event.direction === 'down' ? 1 : -1;
     let at = from + step;
